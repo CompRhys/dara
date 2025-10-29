@@ -125,6 +125,7 @@ class PhaseResult(BaseModel):
             lattice=lattice,
             species=all_species,
             coords=all_coords,
+            tol=2e-4,  # BGMN only has 4 decimal places for atomic positions
         )
 
 
