@@ -2,3 +2,4 @@
 * text=auto
 notebooks/** linguist-vendored
 logo/** linguist-vendored
+src/dara/server/ui/public/** linguist-vendored
