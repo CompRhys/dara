@@ -1,8 +1,10 @@
-"""Load and process XRD data files (.xrdml, .xy)."""
+"""Load and process XRD data files (.xrdml, .xy, .rasx)."""
 
 from __future__ import annotations
 
+import io
 import struct
+import zipfile
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -184,6 +186,35 @@ class XYFile(XRDData):
         return cls(angles, intensities, errors)
 
 
+class RASXFile(XRDData):
+    """Load Rigaku RASX file data format."""
+
+    def __init__(self, angles, intensities, binary_data: bytes | None = None):
+        super().__init__(angles, intensities)
+        self._binary_data = binary_data
+
+    @classmethod
+    def from_file(cls, path: str | Path) -> RASXFile:
+        """Load data from a RASX file."""
+        path = Path(path)
+        (angles, intensities), binary_data = load_rasx(path)
+        return cls(angles, intensities, binary_data)
+
+    @property
+    def binary_data(self) -> bytes | None:
+        """Binary data."""
+        return self._binary_data
+
+    def to_rasx_file(self, fn: str | Path = "xrd_data.rasx") -> None:
+        """Save as a RASX file.
+
+        Args:
+            fn: filename to save to. Defaults to "xrd_data.rasx".
+        """
+        with open(Path(fn), "wb") as f:
+            f.write(self.binary_data)
+
+
 def load_xrdml(file: Path) -> dict:
     """Load an XRDML file and returns a dictionary using xmltodict."""
     with file.open("r", encoding="utf-8") as f:
@@ -266,4 +297,81 @@ def raw2xy(fn: str | Path, target_folder: Path = None) -> Path:
     target_path = target_folder / fn.with_suffix(".xy").name
 
     RawFile.from_file(fn).to_xy_file(target_path)
+    return target_path
+
+
+def load_rasx(file: Path | str) -> tuple[tuple[np.ndarray, np.ndarray], bytes]:
+    """Convert RASX file to xy data.
+
+    RASX files are ZIP archives containing:
+    - root.xml file
+    - Data*/ folders with Profile*.txt files (scan_angle, intensity, attenuation)
+    - MesurementConditions*.xml files (note: typo in original format)
+
+    This function extracts the first scan's data from the first Profile file found.
+
+    Returns:
+        Tuple of ((angles, intensities), content) where content is the raw ZIP bytes.
+        The content is kept for potential round-trip saving, though it's rarely used.
+    """
+    file = Path(file)
+    with open(file, "rb") as f:
+        content = f.read()
+
+    with zipfile.ZipFile(io.BytesIO(content), "r") as zip_ref:
+        namelist = zip_ref.namelist()
+
+        if "root.xml" not in namelist:
+            raise ValueError("No XML file found in the RASX archive.")
+
+        # Find Data folders
+        data_folders: dict[str, list[str]] = {}
+        for name in namelist:
+            if name.startswith("Data") and "/" in name:
+                folder = name.split("/")[0]
+                if folder not in data_folders:
+                    data_folders[folder] = []
+                data_folders[folder].append(name)
+
+        # Get the first Profile file from the first Data folder
+        profile_path = None
+        for _folder_name, file_paths in sorted(data_folders.items()):
+            profile_paths = [p for p in file_paths if "Profile" in p]
+            if profile_paths:
+                profile_path = profile_paths[0]
+                break
+
+        if profile_path is None:
+            raise ValueError("No Profile file found in the RASX archive.")
+
+        # Read profile data (three columns: scan_angle, intensity, attenuation)
+        # Using numpy.loadtxt to handle whitespace-separated values
+        # Decode with utf-8-sig to handle BOM if present
+        with zip_ref.open(profile_path) as profile_file:
+            # Read as text and decode with utf-8-sig to remove BOM if present
+            text_content = profile_file.read().decode("utf-8-sig")
+            # Use StringIO to create a file-like object for np.loadtxt
+            profile_data = np.loadtxt(io.StringIO(text_content), unpack=False)
+
+        # Extract angles (first column) and intensities (second column)
+        # Third column is attenuation, which we don't need for now
+        if profile_data.ndim == 1:
+            # Single row case
+            angles = np.array([profile_data[0]])
+            intensities = np.array([profile_data[1]])
+        else:
+            angles = profile_data[:, 0]
+            intensities = profile_data[:, 1]
+
+    return (angles, intensities), content
+
+
+def rasx2xy(fn: str | Path, target_folder: Path = None) -> Path:
+    """Convert .rasx file to .xy file (and save)."""
+    fn = Path(fn)
+    if target_folder is None:
+        target_folder = fn.parent
+    target_path = target_folder / fn.with_suffix(".xy").name
+
+    RASXFile.from_file(fn).to_xy_file(target_path)
     return target_path
