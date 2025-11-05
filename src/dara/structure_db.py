@@ -158,7 +158,7 @@ class StructureDatabase(MSONable, metaclass=ABCMeta):
                 continue
 
             if e_hull is not None and e_hull > e_hull_filter:
-                print(
+                logger.debug(
                     f"Skipping high-energy phase: {code} ({formula}, {sg}): e_hull = {e_hull}"
                 )
                 continue

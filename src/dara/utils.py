@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Union
 
 import numpy as np
+import structlog
 from monty.json import MontyDecoder
 from pymatgen.core import Composition, Structure
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
@@ -32,6 +33,84 @@ DEPRECATED = "DEPRECATED"
 with open(Path(__file__).parent / "data" / "possible_species.txt") as f:
     POSSIBLE_SPECIES = {sp.strip() for sp in f}
 
+
+def get_logger(
+    name: str,
+    level=logging.DEBUG,
+    stream=sys.stdout,
+):
+    """Get a structlog logger configured for the dara package.
+
+    Returns a structlog.stdlib.BoundLogger that is compatible with standard
+    logging methods (info, warning, error, debug, etc.) while providing
+    structured logging capabilities with file and line number information.
+
+    Note: When used in Ray remote functions, Ray will add its own prefix
+    (e.g., `(_remote_expand_node pid=...)`) before the structlog formatted
+    message. This is expected behavior - Ray captures logs from remote workers
+    and adds process/function identification.
+
+    Args:
+        name: Logger name (typically __name__)
+        level: Logging level (default: logging.DEBUG)
+        log_format: Format string for standard logging (used as fallback)
+        stream: Output stream (default: sys.stdout)
+
+    Returns:
+        structlog.stdlib.BoundLogger instance
+    """
+    # Configure structlog if not already configured
+    if not structlog.is_configured():
+        structlog.configure(
+            processors=[
+                structlog.processors.CallsiteParameterAdder(
+                    parameters={
+                        structlog.processors.CallsiteParameter.PATHNAME,
+                        structlog.processors.CallsiteParameter.FILENAME,
+                        structlog.processors.CallsiteParameter.LINENO,
+                        structlog.processors.CallsiteParameter.PROCESS,
+                    }
+                ),
+                structlog.stdlib.filter_by_level,
+                structlog.stdlib.add_logger_name,
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.PositionalArgumentsFormatter(),
+                structlog.processors.TimeStamper(fmt="iso"),
+                structlog.processors.StackInfoRenderer(),
+                structlog.processors.format_exc_info,
+                structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+            ],
+            context_class=dict,
+            logger_factory=structlog.stdlib.LoggerFactory(),
+            wrapper_class=structlog.stdlib.BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+
+    # Get standard library logger
+    std_logger = logging.getLogger(name)
+    std_logger.setLevel(level)
+
+    # Set up handler if not already configured
+    if not std_logger.handlers:
+        handler = logging.StreamHandler(stream=stream)
+        # Use structlog's formatter for better output
+        formatter = structlog.stdlib.ProcessorFormatter(
+            processor=structlog.dev.ConsoleRenderer(),
+            foreign_pre_chain=[
+                structlog.stdlib.add_log_level,
+                structlog.stdlib.add_logger_name,
+                structlog.processors.TimeStamper(fmt="iso"),
+            ],
+        )
+        handler.setFormatter(formatter)
+        std_logger.addHandler(handler)
+        std_logger.propagate = False
+
+    # Return structlog logger bound to the standard logger
+    return structlog.get_logger(name)
+
+
+logger = get_logger(__name__)
 
 def process_phase_name(phase_name: str) -> str:
     """Process the phase name to remove special characters."""
@@ -241,12 +320,12 @@ def copy_and_rename_files(
         if os.path.isfile(src_file):
             shutil.copy(src_file, dest_file)
             if verbose:
-                print(
+                logger.debug(
                     f"Successfully copied {src_file.name} to {dest_file.name} in {dest_directory}"
                 )
         else:
             if verbose:
-                print(f"ERROR: File {src_file} not found!")
+                logger.warning(f"File {src_file} not found!")
 
 
 def get_chemsys_from_formulas(formulas: list[str]):
@@ -372,33 +451,6 @@ def rpb(y_calc: np.ndarray, y_obs: np.ndarray, y_bkg) -> float:
     y_calc = np.array(y_calc)
     y_obs = np.array(y_obs)
     return np.sum(np.abs(y_calc - y_obs)) / np.sum(np.abs(y_obs - y_bkg)) * 100
-
-
-def get_logger(
-    name: str,
-    level=logging.DEBUG,
-    log_format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    stream=sys.stdout,
-):
-    """Code borrowed from the atomate package.
-
-    Helper method for acquiring logger.
-    """
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    formatter = logging.Formatter(log_format)
-
-    if logger.hasHandlers():
-        logger.handlers.clear()
-
-    sh = logging.StreamHandler(stream=stream)
-    sh.setFormatter(formatter)
-
-    logger.addHandler(sh)
-    logger.propagate = False
-
-    return logger
 
 
 def datetime_str() -> str:
