@@ -13,6 +13,9 @@ import xmltodict
 from dict2xml import dict2xml
 from monty.json import MSONable
 
+from dara.utils import get_logger
+
+logger = get_logger(__name__)
 
 class XRDData(MSONable):
     """General XRD data class; this is the base class for XRDMLFile, XYFile and other
@@ -338,6 +341,11 @@ def load_rasx(file: Path | str) -> tuple[tuple[np.ndarray, np.ndarray], bytes]:
         for _folder_name, file_paths in sorted(data_folders.items()):
             profile_paths = [p for p in file_paths if "Profile" in p]
             if profile_paths:
+                if len(profile_paths) > 1:
+                    log_msg = (
+                        f"Multiple Profile files found in the RASX archive. Using the first one: {profile_paths[0]}"
+                    )
+                    logger.warning(log_msg)
                 profile_path = profile_paths[0]
                 break
 
