@@ -24,16 +24,16 @@ Dara is a Python package for phase analysis and refinement of powder X-ray diffr
 
 Some features of Dara include:
 
-* **Automated refinement**: Automatically refine a powder XRD pattern with the Rietveld
+- **Automated refinement**: Automatically refine a powder XRD pattern with the Rietveld
   method by calling the BGMN program from Python.
-* **Phase identification**: Identify phases in a powder XRD pattern using a parallelized
+- **Phase identification**: Identify phases in a powder XRD pattern using a parallelized
   tree search procedure customized to use any crystallographic database or provided
   CIFs.
-* **Multiple hypotheses**: Compare between multiple possible fits (hypotheses) during phase
+- **Multiple hypotheses**: Compare between multiple possible fits (hypotheses) during phase
   identification performed on a powder XRD pattern.
-* **Data visualization**: Plot powder XRD data and the results of phase identification
+- **Data visualization**: Plot powder XRD data and the results of phase identification
   and refinement, including missing/extra peaks.
-* **Constrained search**: Constrain phase search space using suggested pre-filtering of
+- **Constrained search**: Constrain phase search space using suggested pre-filtering of
   crystallographic databases, as well as reaction energetics and predicted products.
 
 ::::{admonition} Installation (recommended)
@@ -51,6 +51,7 @@ pip install dara-xrd
 ---
 
 ## Wanna have a quick try?
+
 ::::{admonition} 🚀 Try the Dara Web Server!
 :class: tip
 For the fastest way to experience Dara, launch the **web server** and use the browser-based interface:
@@ -62,13 +63,14 @@ dara server
 Then open your browser and navigate to `http://localhost:8898`. You will have a full application with all the features of Dara, including data management, phase analysis, and refinement.
 ::::
 
-
 ## Tutorials
 
 ```{include} tutorial_grid.md
+
 ```
 
 ---
+
 :::{seealso}
 This project gets a lot of inspiration from the [Profex](https://www.profex-xrd.org/)
 project led by Nicola Döbelin. We are very grateful for their work.
@@ -78,10 +80,9 @@ kind permission from the Profex development team.
 :::
 
 :::{seealso}
-BGMN and related files are bundled with kind permission of the BGMN development team. 
+BGMN and related files are bundled with kind permission of the BGMN development team.
 For source code and further information, please visit [http://www.bgmn.de](http://www.bgmn.de).
 :::
-
 
 ```{toctree}
 :maxdepth: 2

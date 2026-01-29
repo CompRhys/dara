@@ -1,4 +1,5 @@
 """Download BGMN executable for Linux, Mac, and Windows."""
+
 import os
 import platform
 import zipfile
@@ -22,9 +23,7 @@ def download_bgmn():
     # download
     r = requests.get(URL, stream=True, timeout=30)
     if r.status_code != 200:
-        raise Exception(
-            f"Cannot download from {URL}. Please check your internet connection or contact the developer."
-        )
+        raise Exception(f"Cannot download from {URL}. Please check your internet connection or contact the developer.")
 
     bgmn_folder = Path(__file__).parent
 

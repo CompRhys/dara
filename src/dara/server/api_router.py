@@ -123,9 +123,7 @@ async def submit(
                     status_code=400,
                     detail="Temperature is not required when not using reaction predictor",
                 )
-            job = PhaseSearchMaker(
-                name=name, verbose=False, phase_predictor=None, max_num_results=5
-            ).make(
+            job = PhaseSearchMaker(name=name, verbose=False, phase_predictor=None, max_num_results=5).make(
                 pattern,
                 precursors=precursor_formulas,
                 cif_dbs=[CODDatabase()],
@@ -160,36 +158,24 @@ async def result(task_id: int):
         return {
             "task_label": job_name,
             "status": job["status"],
-            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
     if job["status"] == "RUNNING":
         return {
             "task_label": job_name,
             "status": job["status"],
-            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-            "start_time": convert_to_local_tz(job["start_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "start_time": convert_to_local_tz(job["start_time"]).strftime("%Y-%m-%d %H:%M:%S"),
         }
 
     if job["status"] == "FIZZLED":
         return {
             "task_label": job_name,
             "status": job["status"],  # FIZZLED
-            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-            "start_time": convert_to_local_tz(job["start_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
-            "end_time": convert_to_local_tz(job["end_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "start_time": convert_to_local_tz(job["start_time"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": convert_to_local_tz(job["end_time"]).strftime("%Y-%m-%d %H:%M:%S"),
             "error_tb": job["error"],
         }
 
@@ -202,9 +188,7 @@ async def result(task_id: int):
     all_results = []
 
     for result in d.results:
-        grouped_phases = (
-            d.grouped_phases[len(all_results)] if d.grouped_phases else None
-        )
+        grouped_phases = d.grouped_phases[len(all_results)] if d.grouped_phases else None
         phases = [[cif.filename for cif in cifs] for cifs in result[0]]
 
         if not grouped_phases:  # for backward compatibility
@@ -212,8 +196,7 @@ async def result(task_id: int):
             for phases_ in phases:
                 grouped_phase = get_compositional_clusters(list(phases_))
                 grouped_phase_with_head = [
-                    (get_head_of_compositional_cluster(cluster), cluster)
-                    for cluster in grouped_phase
+                    (get_head_of_compositional_cluster(cluster), cluster) for cluster in grouped_phase
                 ]
                 grouped_phases.append(grouped_phase_with_head)
 
@@ -221,9 +204,7 @@ async def result(task_id: int):
         for i in range(len(grouped_phases)):
             for j in range(len(grouped_phases[i])):
                 grouped_phases[i][j] = (
-                    grouped_phases[i][j][0]
-                    .reduced_composition.to_html_string()
-                    .replace("<sub>1</sub>", ""),
+                    grouped_phases[i][j][0].reduced_composition.to_html_string().replace("<sub>1</sub>", ""),
                     grouped_phases[i][j][1],
                 )
 
@@ -252,15 +233,9 @@ async def result(task_id: int):
             },
             "all_results": all_results,
             "precursors": d.precursors,
-            "temperature": (
-                None
-                if d.predict_kwargs.get("temp", None) is None
-                else d.predict_kwargs["temp"] - 273
-            ),
+            "temperature": (None if d.predict_kwargs.get("temp", None) is None else d.predict_kwargs["temp"] - 273),
             "use_rxn_predictor": d.phase_predictor is not None,
-            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime(
-                "%Y-%m-%d %H:%M:%S"
-            ),
+            "submitted_on": convert_to_local_tz(job["submitted_time"]).strftime("%Y-%m-%d %H:%M:%S"),
             "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S"),
             "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
             "runtime": runtime,
@@ -284,9 +259,7 @@ async def plot(task_id: int, idx: int = Query(None)):
         result = d.results[idx][1]
         missing_peaks = d.missing_peaks[idx] if d.missing_peaks else None
         extra_peaks = d.extra_peaks[idx] if d.extra_peaks else None
-        return visualize(
-            result=result, missing_peaks=missing_peaks, extra_peaks=extra_peaks
-        ).to_json()
+        return visualize(result=result, missing_peaks=missing_peaks, extra_peaks=extra_peaks).to_json()
     raise HTTPException(status_code=404, detail="Index out of range")
 
 
@@ -305,9 +278,7 @@ async def get_all_tasks(
     if user == "unknown":
         query_dict["user"] = None
     with get_worker_store() as worker_store:
-        tasks = worker_store.query(
-            criteria=query_dict, sort={"submitted_time": -1}, skip=skip, limit=limit
-        )
+        tasks = worker_store.query(criteria=query_dict, sort={"submitted_time": -1}, skip=skip, limit=limit)
 
     tasks_result = []
 
@@ -319,9 +290,7 @@ async def get_all_tasks(
                 "fw_id": index,
                 "name": task["job"]["name"],
                 "state": state,
-                "created_on": convert_to_local_tz(task["submitted_time"]).strftime(
-                    "%Y-%m-%d %H:%M:%S"
-                ),
+                "created_on": convert_to_local_tz(task["submitted_time"]).strftime("%Y-%m-%d %H:%M:%S"),
                 "user": task.get("user", "unknown"),
             }
         )

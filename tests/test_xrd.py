@@ -101,12 +101,8 @@ class TestRASXFile(unittest.TestCase):
             loaded_file = RASXFile.from_file(output_path)
 
             # Check that angles and intensities match
-            np.testing.assert_array_almost_equal(
-                rasx_file.angles, loaded_file.angles, decimal=6
-            )
-            np.testing.assert_array_almost_equal(
-                rasx_file.intensities, loaded_file.intensities, decimal=6
-            )
+            np.testing.assert_array_almost_equal(rasx_file.angles, loaded_file.angles, decimal=6)
+            np.testing.assert_array_almost_equal(rasx_file.intensities, loaded_file.intensities, decimal=6)
 
     def test_rasx_file_plot(self):
         """Test that RASX file can be plotted."""
@@ -122,4 +118,3 @@ class TestRASXFile(unittest.TestCase):
 
         ax = rasx_file.plot(style="line")
         self.assertIsNotNone(ax)
-

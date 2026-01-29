@@ -37,9 +37,7 @@ app = FastAPI(lifespan=launch_worker_process)
 frontend_dir = Path(__file__).parent / "ui" / "public"
 app.include_router(router)
 
-app.mount(
-    "", StaticFiles(directory=frontend_dir.as_posix(), html=True), name="frontend"
-)
+app.mount("", StaticFiles(directory=frontend_dir.as_posix(), html=True), name="frontend")
 
 
 def launch_app():

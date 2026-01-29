@@ -14,7 +14,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Update pip
         run: pip install --upgrade pip
       - name: Set up dependencies
@@ -36,4 +36,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: build/html
           publish_branch: docs
-          exclude_assets: '.github,**/_static/__pycache__,**/_static/__init__.py'
+          exclude_assets: ".github,**/_static/__pycache__,**/_static/__init__.py"

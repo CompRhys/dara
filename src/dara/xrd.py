@@ -17,6 +17,7 @@ from dara.utils import get_logger
 
 logger = get_logger(__name__)
 
+
 class XRDData(MSONable):
     """General XRD data class; this is the base class for XRDMLFile, XYFile and other
     XRD data formats. This class ensures that all XRD data can be serialized.
@@ -227,19 +228,13 @@ def load_xrdml(file: Path) -> dict:
 def get_xrdml_data(xrd_dict: dict) -> tuple[np.ndarray, np.ndarray]:
     """Get angles and intensities from an XRDML dictionary."""
     min_angle = float(
-        xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"][
-            "positions"
-        ][0]["startPosition"]
+        xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"]["positions"][0]["startPosition"]
     )
     max_angle = float(
-        xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"][
-            "positions"
-        ][0]["endPosition"]
+        xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"]["positions"][0]["endPosition"]
     )
 
-    intensities = xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"][
-        "counts"
-    ]["#text"]
+    intensities = xrd_dict["xrdMeasurements"]["xrdMeasurement"]["scan"]["dataPoints"]["counts"]["#text"]
     intensities = np.array([float(val) for val in intensities.split()])
     angles = np.linspace(min_angle, max_angle, len(intensities))
     return angles, intensities
@@ -283,9 +278,7 @@ def load_raw(file: Path | str) -> tuple[tuple[np.ndarray, np.ndarray], bytes]:
 
     for j in range(count):
         ang = start_ang + (j / (count - 1)) * (end_ang - start_ang)
-        its = hex2float(
-            content[start_idx + j * size_float : start_idx + (j + 1) * size_float]
-        )
+        its = hex2float(content[start_idx + j * size_float : start_idx + (j + 1) * size_float])
         angles[j] = ang
         intensities[j] = its
 

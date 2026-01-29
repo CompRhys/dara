@@ -90,7 +90,7 @@ SamplH=25
 % inner diameter of the capillary (mm)
 T=0.205
 
-% Reciprocal value in mm of the linear absorption coefficient (LAC). 
+% Reciprocal value in mm of the linear absorption coefficient (LAC).
 % Add "GOAL=my" to a structure file to print the LAC to the LST file.
 D=0.0525
 

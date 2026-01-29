@@ -5,12 +5,13 @@ symmetry.
 import logging
 from pathlib import Path
 
-from dara import SETTINGS
-from dara.cif import Cif
 from monty.serialization import dumpfn, loadfn
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from tqdm import tqdm
+
+from dara import SETTINGS
+from dara.cif import Cif
 
 path_to_icsd = Path(SETTINGS.PATH_TO_ICSD)
 MAX_NUM_ATOMS = 128
@@ -32,15 +33,11 @@ def load_icsd_structures():
     """
     icsd_data = {}
 
-    for filename in tqdm(
-        sorted(path_to_icsd.glob("*.cif")), desc="Loading ICSD structures..."
-    ):
+    for filename in tqdm(sorted(path_to_icsd.glob("*.cif")), desc="Loading ICSD structures..."):
         try:
             cif = Cif.from_file(filename)
         except Exception as err:
-            logging.error(
-                f"Error reading CIF from file: {filename} due to error: {err}"
-            )
+            logging.error(f"Error reading CIF from file: {filename} due to error: {err}")
             continue
 
         try:
@@ -55,9 +52,7 @@ def load_icsd_structures():
         temp = float(metadata.get("_diffrn_ambient_temperature", 0))
         if temp == 0:
             temp = metadata.get("_cell_measurement_temperature", 0)
-        icsd_id = metadata.get(
-            "_database_code_ICSD", filename.stem
-        )  # prefer whats in CIF
+        icsd_id = metadata.get("_database_code_ICSD", filename.stem)  # prefer CIF contents
         data = {"structure": structure, "temp": temp, "date": date, "icsd_id": icsd_id}
 
         chemsys = structure.composition.chemical_system
@@ -93,17 +88,13 @@ def filter_icsd_structures(icsd_data, mp_struct_info):
                 print("skipping (too big):", item["icsd_id"])
                 continue
             try:
-                sg_data = SpacegroupAnalyzer(
-                    structure=item["structure"], symprec=0.1
-                )._space_group_data
+                sg_data = SpacegroupAnalyzer(structure=item["structure"], symprec=0.1)._space_group_data
             except Exception:
                 sg_data = None
 
             if sg_data is None:
                 try:  # different tolerance
-                    sg_data = SpacegroupAnalyzer(
-                        structure=item["structure"], symprec=0.01
-                    )._space_group_data
+                    sg_data = SpacegroupAnalyzer(structure=item["structure"], symprec=0.01)._space_group_data
                 except Exception:
                     try:
                         sg_data = SpacegroupAnalyzer(
@@ -147,9 +138,7 @@ def filter_icsd_structures(icsd_data, mp_struct_info):
 
         for sg, groups in sorted_data:
             for group in groups:
-                group_sorted = sorted(
-                    group, key=lambda x: (abs(x["temp"] - 293.0), x["date"])
-                )
+                group_sorted = sorted(group, key=lambda x: (abs(x["temp"] - 293.0), x["date"]))
                 selected = group_sorted[0]
                 formula = selected["structure"].composition.reduced_formula
                 data = [formula, selected["icsd_id"], sg, None]
@@ -172,12 +161,8 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     path = Path(__file__).resolve()
 
-    logging.info(
-        "Loading information on MP structures (formulas, space groups, e_hulls)..."
-    )
-    mp_struct_info = loadfn(
-        Path(__file__).resolve().parent.parent / "src/dara/data/mp_struct_info.json.gz"
-    )
+    logging.info("Loading information on MP structures (formulas, space groups, e_hulls)...")
+    mp_struct_info = loadfn(Path(__file__).resolve().parent.parent / "src/dara/data/mp_struct_info.json.gz")
 
     logging.info("Loading ICSD structures...")
     icsd_data = load_icsd_structures()

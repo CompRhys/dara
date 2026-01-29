@@ -19,6 +19,7 @@ Dara is designed for <strong>automated phase identification and refinement</stro
 The Dara server provides a web-based interface for automated phase identification from powder X-ray diffraction (XRD) data.
 
 ## Getting Started
+
 You'll see the main interface with navigation options:
 
 - **Submit**: Upload and analyze new XRD patterns
@@ -35,6 +36,7 @@ Click on "Submit" in the navigation menu to access the submission form.
 ### Step 2: Upload Your XRD Pattern
 
 **Supported File Formats:**
+
 - `.xy` - Two-column ASCII format (2θ, intensity)
 - `.txt` - Text files with diffraction data
 - `.xye` - Three-column format (2θ, intensity, error)
@@ -46,11 +48,13 @@ Click on "Submit" in the navigation menu to access the submission form.
 
 **Precursor Formulas:**
 Enter the chemical formulas of your starting materials, splitted by comma.
+
 ```
 CaO, TiO2
 ```
 
 or you can write the target phase formula in the text box, like
+
 ```
 CaTiO3
 ```
@@ -66,6 +70,7 @@ Enter your username for tracking and organization purposes. You can use this opt
 Select your diffractometer configuration from the dropdown.
 
 **Reaction Predictor (Optional):**
+
 - **Enable**: Check this box to use reaction prediction
 - **Temperature**: Specify reaction temperature in Celsius (-273°C minimum)
 - **Disable**: Leave unchecked to perform standard database search
@@ -81,6 +86,7 @@ Click "Submit Analysis" to queue your job. You will see if there is any error in
 Navigate to "Results" to see all submitted analyses:
 
 **Table Columns:**
+
 - **ID #**: Unique task identifier
 - **Name**: Original filename
 - **Status**: Current processing state
@@ -104,6 +110,7 @@ Navigate through results using the pagination controls at the bottom.
 Click on any completed analysis to view detailed results:
 
 ### Status Information
+
 - **Task Label**: Original filename
 - **Status**: Final processing state
 - **Runtime**: Total computation time
@@ -115,11 +122,13 @@ Click on any completed analysis to view detailed results:
 A numerical value indicating fit quality (lower numbers indicate better fits).
 
 **Identified Phases:**
+
 - **Representative Phases**: Primary phase in each compositional group
 - **Phase Groups**: Related phases grouped by composition
 - **Highlighted Phases**: Phases significantly contributing to the pattern
 
 **Phase Information:**
+
 - Chemical formula with proper subscripts
 - Structural identification from COD database
 - Relative abundance in refinement
@@ -130,6 +139,7 @@ A numerical value indicating fit quality (lower numbers indicate better fits).
 Interactive plots are displayed showing your experimental data overlaid with the calculated fit.
 
 **Plot Controls:**
+
 - Use your mouse to zoom, pan, and hover for detailed inspection
 - Click buttons to switch between different refinement results
 - Right-click on plots to download as images
@@ -149,12 +159,14 @@ The analysis typically provides several possible solutions ranked by fit quality
 For programmatic access, the server provides RESTful API endpoints:
 
 ### Submit Analysis
+
 ```bash
 POST /api/submit
 ```
 
 You can use this Python code to submit an analysis:
-```python
+
+````python
 import requests
 from requests.auth import HTTPBasicAuth
 import re
@@ -196,18 +208,19 @@ for file in dataset_path.glob("*.xrdml"):
 ### Get Task Status
 ```bash
 GET /api/task/{task_id}
-```
-
+````
 
 ## Troubleshooting
 
 ### Common Issues
 
 **File Upload Fails:**
+
 - Check file format is supported
 - Ensure file is not corrupted and correctly formatted
 
 **Poor Results:**
+
 - Try different instrument profiles from the dropdown
 - Double-check your wavelength setting
 - Verify your precursor formulas are entered correctly

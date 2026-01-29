@@ -104,7 +104,7 @@ SColl=0.0218
 % Anti-Scatter slit
 %-----------------------------------------------------------------------------------------------
 
-% Note: A fixed anti-scatter slit of 0.2° was used. We're calculating the opening in mm as a 
+% Note: A fixed anti-scatter slit of 0.2° was used. We're calculating the opening in mm as a
 % function of a randomly chosen distance.
 
 % opening in degrees

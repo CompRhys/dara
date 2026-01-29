@@ -24,9 +24,7 @@ def copy_instrument_files(instrument_profile: str | Path, working_dir: Path) -> 
     -------
         The name of the instrument
     """
-    default_instrument_path = (
-        Path(__file__).parent / "data" / "BGMN-Templates" / "Devices"
-    )
+    default_instrument_path = Path(__file__).parent / "data" / "BGMN-Templates" / "Devices"
     instrument_path = Path(instrument_profile)  # try to parse as a path
     if instrument_path.suffix != ".geq" or not instrument_path.exists():
         instrument_profile = instrument_path.name.removesuffix(".geq")
@@ -53,9 +51,7 @@ def copy_xy_pattern(pattern_path: Path, working_dir: Path) -> Path:
 def trim_pattern(xy_content: np.ndarray) -> np.ndarray:
     """Trim the pattern to remove negative intensities."""
     if xy_content[:, 1].min() <= 0:
-        warnings.warn(
-            "Pattern contains negative or zero intensities. Setting them to 1e-6."
-        )
+        warnings.warn("Pattern contains negative or zero intensities. Setting them to 1e-6.")
         xy_content[:, 1] = np.clip(xy_content[:, 1], 1e-6, None)
 
     if xy_content[:, 0].min() < 1.0:
@@ -102,9 +98,7 @@ def generate_control_file(
         control_file_path = working_dir / f"{pattern_path.stem}.sav"
 
     copy_xy_pattern(pattern_path, control_file_path.parent)
-    instrument_name = copy_instrument_files(
-        instrument_profile, control_file_path.parent
-    )
+    instrument_name = copy_instrument_files(instrument_profile, control_file_path.parent)
 
     xy_pattern_path = control_file_path.parent / pattern_path.name
 
@@ -116,20 +110,11 @@ def generate_control_file(
     xy_content = trim_pattern(xy_content)
     np.savetxt(xy_pattern_path, xy_content, fmt="%.6f")
 
-    phases_str = "\n".join(
-        [f"STRUC[{i}]={str_path.name}" for i, str_path in enumerate(str_paths, start=1)]
-    )
+    phases_str = "\n".join([f"STRUC[{i}]={str_path.name}" for i, str_path in enumerate(str_paths, start=1)])
 
     phase_names = [read_phase_name_from_str(str_path) for str_path in str_paths]
-    phase_fraction_str = "\n".join(
-        [f"Q{phase_name}={phase_name}/sum" for phase_name in phase_names]
-    )
-    goal_str = "\n".join(
-        [
-            f"GOAL[{i}]=Q{phase_name}"
-            for i, phase_name in enumerate(phase_names, start=1)
-        ]
-    )
+    phase_fraction_str = "\n".join([f"Q{phase_name}={phase_name}/sum" for phase_name in phase_names])
+    goal_str = "\n".join([f"GOAL[{i}]=Q{phase_name}" for i, phase_name in enumerate(phase_names, start=1)])
 
     control_file = f"""
     % Theoretical instrumental function

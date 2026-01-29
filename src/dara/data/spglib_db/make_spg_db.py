@@ -108,19 +108,13 @@ def xml2dict_sp(xml_file):
                     wycoff_letter = wyckoff.attrib["Symbol"]
                     wycs[wycoff_letter] = {
                         **wyckoff.attrib,
-                        "std_notations": [
-                            elem.text
-                            for elem in wyckoff
-                            if elem.attrib["Standard"] == "1"
-                        ],
+                        "std_notations": [elem.text for elem in wyckoff if elem.attrib["Standard"] == "1"],
                     }
 
                     for i in range(len(wycs[wycoff_letter]["std_notations"])):
                         notation = wycs[wycoff_letter]["std_notations"][i]
                         if re.match(r"-x x (\w+)", notation):
-                            wycs[wycoff_letter]["std_notations"][i] = re.sub(
-                                r"-x x (\w+)", r"x -x \1", notation
-                            )
+                            wycs[wycoff_letter]["std_notations"][i] = re.sub(r"-x x (\w+)", r"x -x \1", notation)
 
                 data.setdefault(sub_child.get("HermannMauguin"), []).append(
                     {**settings, "SpacegroupNo": child.get("Number"), "Wyckoffs": wycs}
@@ -172,11 +166,7 @@ if __name__ == "__main__":
             [
                 v_name
                 if isinstance(
-                    (
-                        v_name := new2old.get(
-                            v["international_full"], v["international_full"]
-                        )
-                    ),
+                    (v_name := new2old.get(v["international_full"], v["international_full"])),
                     list,
                 )
                 else [v_name]
@@ -195,11 +185,7 @@ if __name__ == "__main__":
         hm = v_new["international_full"]
         hm = new2old.get(hm, hm)
         if (isinstance(hm, list) and any(hm_ in data1 for hm_ in hm)) or hm in data1:
-            settings = (
-                sum([data1[hm_] for hm_ in hm if hm_ in data1], [])
-                if isinstance(hm, list)
-                else data1[hm]
-            )
+            settings = sum([data1[hm_] for hm_ in hm if hm_ in data1], []) if isinstance(hm, list) else data1[hm]
             settings_list = []
             for setting in settings:
                 setting = {**setting}

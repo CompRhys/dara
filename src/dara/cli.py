@@ -9,6 +9,7 @@ class Server(DaraServerSettings):
 
     def cli_cmd(self) -> None:
         from dara.server.app import launch_app
+
         launch_app()
 
 

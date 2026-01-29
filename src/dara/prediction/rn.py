@@ -240,7 +240,7 @@ class ReactionNetworkEngine(PredictionEngine):
         probabilities = [inv_rank / total_inverse_rankings for inv_rank in inverse_rankings]
         return collections.OrderedDict(
             sorted(
-                {k.reduced_formula: round(v, 4) for k, v in zip(phases, probabilities)}.items(),
+                {k.reduced_formula: round(v, 4) for k, v in zip(phases, probabilities, strict=False)}.items(),
                 key=lambda item: item[1],
                 reverse=True,
             )

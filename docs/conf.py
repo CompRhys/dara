@@ -103,9 +103,7 @@ html_title = "Dara Documentation"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = []
-html_js_files = [
-    "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"
-]
+html_js_files = ["https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"]
 
 StandaloneHTMLBuilder.supported_image_types = [
     "image/svg+xml",
@@ -126,10 +124,7 @@ def run_apidoc(_):
 
     ignore_paths = []
 
-    ignore_paths = [
-        (Path(__file__).parent.parent.parent / p).absolute().as_posix()
-        for p in ignore_paths
-    ]
+    ignore_paths = [(Path(__file__).parent.parent.parent / p).absolute().as_posix() for p in ignore_paths]
 
     argv = [
         "-f",

@@ -142,9 +142,7 @@ class StructureDatabase(MSONable, metaclass=ABCMeta):
     ):
         """A mapping of database file paths to new file names with structure metadata included."""
         if not self.local_copy_found:
-            logger.warning(
-                "Local copy of database not found. Attempting to download structures..."
-            )
+            logger.warning("Local copy of database not found. Attempting to download structures...")
             _ = self.download_structures(
                 [data[1] for data in all_data],
                 save=True,
@@ -158,18 +156,12 @@ class StructureDatabase(MSONable, metaclass=ABCMeta):
                 continue
 
             if e_hull is not None and e_hull > e_hull_filter:
-                print(
-                    f"Skipping high-energy phase: {code} ({formula}, {sg}): e_hull = {e_hull}"
-                )
+                print(f"Skipping high-energy phase: {code} ({formula}, {sg}): e_hull = {e_hull}")
                 continue
 
             e_hull_value = round(1000 * e_hull) if e_hull is not None else None
 
-            fp = (
-                f"{self.get_file_path(code)}"
-                if self.local_copy_found
-                else f"{download_folder}/{code}.cif"
-            )
+            fp = f"{self.get_file_path(code)}" if self.local_copy_found else f"{download_folder}/{code}.cif"
             file_map[fp] = f"{formula}_{sg}_({self.name}_{code})-{e_hull_value}.cif"
 
         return file_map
@@ -192,9 +184,7 @@ class StructureDatabase(MSONable, metaclass=ABCMeta):
         return self.path.exists()
 
     @abstractmethod
-    def download_structures(
-        self, ids: list[str] | None = None, save=False, default_folder=None
-    ) -> list[Cif]:
+    def download_structures(self, ids: list[str] | None = None, save=False, default_folder=None) -> list[Cif]:
         """Download structures from the database."""
 
     @abstractmethod
@@ -240,9 +230,7 @@ class CODDatabase(StructureDatabase):
         path_to_cifs: Path to a folder containing the CIFs for the database.
         """
         super().__init__(path_to_cifs)
-        self._preparsed_info = loadfn(
-            Path(__file__).parent / "data/cod_filtered_info_2024.json.gz"
-        )
+        self._preparsed_info = loadfn(Path(__file__).parent / "data/cod_filtered_info_2024.json.gz")
 
     def download_structures(
         self,
@@ -336,17 +324,13 @@ class ICSDDatabase(StructureDatabase):
         :param path_to_icsd: Path to the ICSD database
         """
         super().__init__(path_to_cifs)
-        self._preparsed_info = loadfn(
-            Path(__file__).parent / "data/icsd_filtered_info_2025_v3.json.gz"
-        )
+        self._preparsed_info = loadfn(Path(__file__).parent / "data/icsd_filtered_info_2025_v3.json.gz")
 
     def get_file_path(self, cif_id: str | int):
         """Get the path to a CIF file in the ICSD database."""
         return self.path / f"icsd_{self._clean_icsd_code(cif_id)}.cif"
 
-    def download_structures(
-        self, ids: list[str] | None = None, save=False, default_folder=None
-    ) -> list[Cif]:
+    def download_structures(self, ids: list[str] | None = None, save=False, default_folder=None) -> list[Cif]:
         """Download structures from the ICSD database."""
         raise NotImplementedError(
             "Downloading from the online ICSD database will not be implemented. Please use a local copy of CIFs"

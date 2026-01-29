@@ -3,7 +3,7 @@ const pathPrefix = process.env.PATH_PREFIX ? process.env.PATH_PREFIX : "/";
 module.exports = {
   pathPrefix: pathPrefix,
   siteMetadata: {
-    title: 'Amesp - www.amesp.xyz',
+    title: "Amesp - www.amesp.xyz",
   },
   plugins: [
     {
@@ -22,23 +22,23 @@ module.exports = {
           {
             resolve: `gatsby-remark-copy-linked-files`,
             options: {
-              destinationDir: f => `static/${f.name}-${f.hash}`,
-              ignoreFileExtensions: []
+              destinationDir: (f) => `static/${f.name}-${f.hash}`,
+              ignoreFileExtensions: [],
             },
           },
           {
-            resolve: 'gatsby-remark-emoji',
+            resolve: "gatsby-remark-emoji",
             options: {
-              emojiConversion: 'shortnameToUnicode',
+              emojiConversion: "shortnameToUnicode",
               ascii: true,
-            }
+            },
           },
         ],
       },
-    },          
+    },
     `gatsby-plugin-react-helmet`,
     `gatsby-plugin-styled-components`,
     `gatsby-plugin-catch-links`,
-    `gatsby-plugin-use-query-params`
-  ]
-}
+    `gatsby-plugin-use-query-params`,
+  ],
+};

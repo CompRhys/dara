@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import os
 import re
 import subprocess
@@ -34,10 +35,7 @@ class EflechWorker:
         self.eflech_path = self.bgmn_folder / "eflech"
         self.teil_path = self.bgmn_folder / "teil"
 
-        if (
-            not self.eflech_path.exists()
-            and not self.eflech_path.with_suffix(".exe").exists()
-        ):
+        if not self.eflech_path.exists() and not self.eflech_path.with_suffix(".exe").exists():
             logger.warning("BGMN executable not found. Downloading BGMN.")
             download_bgmn()
 
@@ -111,9 +109,7 @@ class EflechWorker:
             if ru:
                 ru = int(ru.group(1))
             else:
-                raise RuntimeError(
-                    "RU value not found in teil output. The output is: \n" + teil_output
-                )
+                raise RuntimeError("RU value not found in teil output. The output is: \n" + teil_output)
             control_file_content = control_file_path.read_text()
             all_wmin2 = re.findall(r"WMIN2\[\d+]==(.*?)\n", control_file_content)
             all_wmax2 = re.findall(r"WMAX2\[\d+]==(.*?)\n", control_file_content)
@@ -126,14 +122,9 @@ class EflechWorker:
             if (
                 not all_wmin2
                 or not all_wmax2
-                or any(
-                    wmax - wmin > 0.5 * two_theta_range
-                    for wmin, wmax in zip(all_wmin2, all_wmax2)
-                )
+                or any(wmax - wmin > 0.5 * two_theta_range for wmin, wmax in zip(all_wmin2, all_wmax2, strict=False))
             ):
-                warnings.warn(
-                    "teil cannot find a good split of the pattern. Trying to split it with dara-teil."
-                )
+                warnings.warn("teil cannot find a good split of the pattern. Trying to split it with dara-teil.")
                 self.patch_control_file_after_teil(control_file_path, ru, xy_content)
 
             self.run_eflech(
@@ -171,9 +162,7 @@ class EflechWorker:
             OUTPUTMASK=output-$
             TITELMASK=output-$"""
 
-        control_file_str = "\n".join(
-            [line.strip() for line in control_file_str.split("\n")]
-        )
+        control_file_str = "\n".join([line.strip() for line in control_file_str.split("\n")])
         control_file_path = pattern_path.parent / "control.sav"
 
         with control_file_path.open("w") as f:
@@ -243,9 +232,7 @@ class EflechWorker:
         peak_list_two_theta = np.column_stack((two_theta, intensity, b1, b2))
         peak_list_two_theta = peak_list_two_theta[peak_list_two_theta[:, 0].argsort()]
 
-        return pd.DataFrame(
-            peak_list_two_theta, columns=["2theta", "intensity", "b1", "b2"]
-        ).astype(float)
+        return pd.DataFrame(peak_list_two_theta, columns=["2theta", "intensity", "b1", "b2"]).astype(float)
 
     @staticmethod
     def parse_par_file(par_file: Path, wavelength: float) -> list[list[float]]:
@@ -277,11 +264,7 @@ class EflechWorker:
                 rp = int(numbers[0])
                 intensity = float(numbers[1])
                 d_inv = float(numbers[2])
-                gsum = (
-                    1.0
-                    if (gsum := re.search("GSUM=(\\d+(\\.\\d+)?)", content[i])) is None
-                    else float(gsum.group(1))
-                )
+                gsum = 1.0 if (gsum := re.search("GSUM=(\\d+(\\.\\d+)?)", content[i])) is None else float(gsum.group(1))
                 intensity = intensity_correction(
                     intensity=intensity,
                     d_inv=d_inv,
@@ -309,9 +292,7 @@ class EflechWorker:
 
         return peak_list
 
-    def patch_control_file_after_teil(
-        self, control_file_path: Path, ru: int, xy_content: np.ndarray
-    ):
+    def patch_control_file_after_teil(self, control_file_path: Path, ru: int, xy_content: np.ndarray):
         """
         Patch the control file after teil is run. If the divided pattern is still too large,
         we will divide it further to save the computation time.
@@ -330,9 +311,7 @@ class EflechWorker:
         breakpoints = self.get_background_breakpoints(ru, xy_content)
 
         partial_pattern_str = "% dara-teil has computed the following angular ranges\n"
-        for i, (breakpoint_1, breakpoint_2) in enumerate(
-            zip(breakpoints[:-1], breakpoints[1:]), start=1
-        ):
+        for i, (breakpoint_1, breakpoint_2) in enumerate(itertools.pairwise(breakpoints), start=1):
             partial_pattern_str += (
                 f"% Dara Teil {i}\n"
                 f"WMIN[{i}]=={breakpoint_1['lower_bound']:.6f}\n"
@@ -354,9 +333,7 @@ class EflechWorker:
         control_file_path.write_text(control_file_content)
 
     @staticmethod
-    def get_background_breakpoints(
-        ru: int, xy_content: np.ndarray
-    ) -> list[dict[str, float]]:
+    def get_background_breakpoints(ru: int, xy_content: np.ndarray) -> list[dict[str, float]]:
         """
         Get the background breakpoints from the teil output.
 

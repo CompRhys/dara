@@ -92,20 +92,14 @@ def visualize(
 
     peak_data = result.peak_data
     max_y = max(np.array(result.plot_data.y_obs) + np.array(result.plot_data.y_bkg))
-    min_y_diff = min(
-        np.array(result.plot_data.y_obs) - np.array(result.plot_data.y_calc)
-    )
+    min_y_diff = min(np.array(result.plot_data.y_obs) - np.array(result.plot_data.y_calc))
     # Adding dashed lines for phases
     for i, (phase_name, phase) in enumerate(plot_data.structs.items()):
         # add area under the curve between the curve and the plot_data["y_bkg"]
         if i >= len(colormap) - 1:
             i = i % (len(colormap) - 1)
 
-        name = (
-            f"{phase_name} ({weight_fractions[phase_name] * 100:.2f} %)"
-            if len(weight_fractions) > 1
-            else phase_name
-        )
+        name = f"{phase_name} ({weight_fractions[phase_name] * 100:.2f} %)" if len(weight_fractions) > 1 else phase_name
         fig.add_trace(
             go.Scatter(
                 x=plot_data.x,
@@ -146,7 +140,7 @@ def visualize(
                 legendgroup=phase_name,
                 showlegend=False,
                 visible="legendonly",
-                text=[f"{x:.2f}, {y:.2f}" for x, y in zip(refl, intensity)],
+                text=[f"{x:.2f}, {y:.2f}" for x, y in zip(refl, intensity, strict=False)],
                 hovertemplate="%{text}",
             )
         )

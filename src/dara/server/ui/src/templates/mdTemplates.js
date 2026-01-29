@@ -1,8 +1,8 @@
-import React from 'react';
-import { graphql } from "gatsby"
-import Layout, { BREAK_POINT } from '../components/Layout';
-import 'github-markdown-css/github-markdown.css';
-import styled from 'styled-components';
+import React from "react";
+import { graphql } from "gatsby";
+import Layout, { BREAK_POINT } from "../components/Layout";
+import "github-markdown-css/github-markdown.css";
+import styled from "styled-components";
 
 const MarkdownContainer = styled.div`
   font-size: 1.2em;
@@ -10,7 +10,7 @@ const MarkdownContainer = styled.div`
   p {
     line-height: 160%;
   }
-  
+
   .center {
     text-align: center;
   }
@@ -30,13 +30,13 @@ export default function Template({ data }) {
     <Layout hasSider={frontmatter.hasSider} title={frontmatter.title}>
       <MarkdownContainer
         style={{
-          maxWidth: frontmatter.hasSider ? "750px" : "unset"
+          maxWidth: frontmatter.hasSider ? "750px" : "unset",
         }}
         className="markdown-body markdown-container"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     </Layout>
-  )
+  );
 }
 
 export const pageQuery = graphql`
@@ -50,4 +50,4 @@ export const pageQuery = graphql`
       }
     }
   }
-`
+`;

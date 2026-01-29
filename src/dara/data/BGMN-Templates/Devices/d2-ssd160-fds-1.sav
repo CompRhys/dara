@@ -12,11 +12,11 @@
 %        Bank 1: Soller slit, 2.5°
 %        Bank 2: Divergence slit, fix, 1 mm
 %        Bank 3: Empty
-%		 
+%
 %     Secondary path:
 %        Bank 0: LynxEye SSD160, 160 channels, 75um
 %        Bank 1: Empty soller mount
-%	
+%
 %     Radius: 141 mm
 %
 %***********************************************************************************************

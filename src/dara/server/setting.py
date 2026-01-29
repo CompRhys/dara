@@ -38,50 +38,37 @@ class DaraServerSettings(BaseSettings):
         cli_ignore_unknown_args=True,
     )
 
+    host: str = Field(default="127.0.0.1", description="The host address for the server.")
 
-    host: str = Field(
-        default="127.0.0.1",
-        description="The host address for the server."
-    )
-
-    port: int = Field(
-        default=8898,
-        description="The port on which the server will run."
-    )
+    port: int = Field(default=8898, description="The port on which the server will run.")
 
     database_backend: Literal["monty", "mongodb"] = Field(
-        default="monty",
-        description="The backend to use for the database."
+        default="monty", description="The backend to use for the database."
     )
 
     mongodb_host: str = Field(
-        default="localhost",
-        description='Host for MongoDB. Used only if database_backend is "mongodb".'
+        default="localhost", description='Host for MongoDB. Used only if database_backend is "mongodb".'
     )
 
     mongodb_port: int = Field(
-        default=27017,
-        description='Port for MongoDB. Used only if database_backend is "mongodb".'
+        default=27017, description='Port for MongoDB. Used only if database_backend is "mongodb".'
     )
 
     mongodb_database: str = Field(
-        default="dara_server",
-        description='Database name for MongoDB. Used only if database_backend is "mongodb".'
+        default="dara_server", description='Database name for MongoDB. Used only if database_backend is "mongodb".'
     )
 
     mongodb_username: str | None = Field(
-        default=None,
-        description='Username for MongoDB. Used only if database_backend is "mongodb".'
+        default=None, description='Username for MongoDB. Used only if database_backend is "mongodb".'
     )
 
     mongodb_password: str | None = Field(
-        default=None,
-        description='Password for MongoDB. Used only if database_backend is "mongodb".'
+        default=None, description='Password for MongoDB. Used only if database_backend is "mongodb".'
     )
 
     montydb_path: str = Field(
         default=os.path.expanduser("~/.dara-server/montydb"),
-        description='Path for MontyDB database. Used only if database_backend is "monty".'
+        description='Path for MontyDB database. Used only if database_backend is "monty".',
     )
 
     def __init__(self, **values):

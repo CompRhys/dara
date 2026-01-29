@@ -11,24 +11,28 @@ The Dara server is a FastAPI-based backend that manages data storage, computatio
 ### Core Capabilities
 
 **⚙️ Config-Free Operation**
+
 - The Dara server can be started and used immediately without any configuration files.
 - All essential settings (host, port, database backend, etc.) have sensible defaults.
 - You can override any setting via command-line arguments or environment variables if needed.
 - No need for installation of MongoDB or other database systems.
 
 **🔬 Automated Phase Identification**
+
 - Upload powder XRD patterns in multiple formats (`.xy`, `.txt`, `.xye`, `.xrdml`, `.raw`, `.rasx`)
 - Automated phase identification using crystallographic databases (COD, ICSD)
 - Advanced Rietveld refinement using BGMN engine
 - Machine learning-enhanced phase matching
 
 **📊 Interactive Analysis**
+
 - Web-based user interface with real-time visualization
 - Multiple refinement solutions with quality rankings
 - Interactive plots with zoom, pan, and export capabilities
 - Task management and result tracking
 
 **🔗 API Access**
+
 - RESTful API for programmatic access
 - Batch processing capabilities
 - Integration with external workflows
@@ -48,11 +52,13 @@ pip install dara
 ### 2. Basic Server Startup
 
 **Command Line Interface:**
+
 ```bash
 dara server
 ```
 
 This starts the server with default settings:
+
 - Host: `127.0.0.1` (localhost)
 - Port: `8898`
 - Database: MontyDB (local file-based, pure python)
@@ -63,6 +69,7 @@ Open your browser and navigate to: `http://localhost:8898`
 ### 3. Custom Configuration
 
 **With Command Line Arguments:**
+
 ```bash
 # Start on different host/port
 dara server --host 0.0.0.0 --port 9000
@@ -72,6 +79,7 @@ dara server --database-backend mongodb --mongodb-host localhost --mongodb-port 2
 ```
 
 **With Environment Variables:**
+
 ```bash
 # Set environment variables
 export DARA_SERVER_HOST=0.0.0.0
@@ -93,12 +101,13 @@ dara server
 
 ### Server Settings
 
-| Parameter | Default | Description | Environment Variable |
-|-----------|---------|-------------|---------------------|
-| `host` | `127.0.0.1` | Server host address | `DARA_SERVER_HOST` |
-| `port` | `8898` | Server port number | `DARA_SERVER_PORT` |
+| Parameter | Default     | Description         | Environment Variable |
+| --------- | ----------- | ------------------- | -------------------- |
+| `host`    | `127.0.0.1` | Server host address | `DARA_SERVER_HOST`   |
+| `port`    | `8898`      | Server port number  | `DARA_SERVER_PORT`   |
 
 **Example:**
+
 ```bash
 # Allow external connections
 dara server --host 0.0.0.0 --port 8080
@@ -109,28 +118,32 @@ dara server --host 0.0.0.0 --port 8080
 The server supports two database backends:
 
 #### MontyDB (Default - File-based)
-| Parameter | Default | Description | Environment Variable |
-|-----------|---------|-------------|---------------------|
-| `database_backend` | `monty` | Database type | `DARA_SERVER_DATABASE_BACKEND` |
-| `montydb_path` | `~/.dara-server/montydb` | Database file location | `DARA_SERVER_MONTYDB_PATH` |
+
+| Parameter          | Default                  | Description            | Environment Variable           |
+| ------------------ | ------------------------ | ---------------------- | ------------------------------ |
+| `database_backend` | `monty`                  | Database type          | `DARA_SERVER_DATABASE_BACKEND` |
+| `montydb_path`     | `~/.dara-server/montydb` | Database file location | `DARA_SERVER_MONTYDB_PATH`     |
 
 **Example:**
+
 ```bash
 # Custom MontyDB location
 dara server --montydb-path /data/dara/montydb
 ```
 
 #### MongoDB (Production)
-| Parameter | Default | Description | Environment Variable |
-|-----------|---------|-------------|---------------------|
-| `database_backend` | `monty` | Set to `mongodb` | `DARA_SERVER_DATABASE_BACKEND` |
-| `mongodb_host` | `localhost` | MongoDB host | `DARA_SERVER_MONGODB_HOST` |
-| `mongodb_port` | `27017` | MongoDB port | `DARA_SERVER_MONGODB_PORT` |
-| `mongodb_database` | `dara_server` | Database name | `DARA_SERVER_MONGODB_DATABASE` |
-| `mongodb_username` | `None` | Username (optional) | `DARA_SERVER_MONGODB_USERNAME` |
-| `mongodb_password` | `None` | Password (optional) | `DARA_SERVER_MONGODB_PASSWORD` |
+
+| Parameter          | Default       | Description         | Environment Variable           |
+| ------------------ | ------------- | ------------------- | ------------------------------ |
+| `database_backend` | `monty`       | Set to `mongodb`    | `DARA_SERVER_DATABASE_BACKEND` |
+| `mongodb_host`     | `localhost`   | MongoDB host        | `DARA_SERVER_MONGODB_HOST`     |
+| `mongodb_port`     | `27017`       | MongoDB port        | `DARA_SERVER_MONGODB_PORT`     |
+| `mongodb_database` | `dara_server` | Database name       | `DARA_SERVER_MONGODB_DATABASE` |
+| `mongodb_username` | `None`        | Username (optional) | `DARA_SERVER_MONGODB_USERNAME` |
+| `mongodb_password` | `None`        | Password (optional) | `DARA_SERVER_MONGODB_PASSWORD` |
 
 **Example:**
+
 ```bash
 # MongoDB with authentication
 dara server \
@@ -149,6 +162,7 @@ dara server \
 To enable reaction prediction features:
 
 1. **Set API Key:**
+
    ```bash
    export MP_API_KEY=your_materials_project_api_key
    ```
@@ -159,6 +173,7 @@ To enable reaction prediction features:
    ```
 
 **Get Materials Project API Key:**
+
 - Register at https://materialsproject.org/
 - Navigate to your dashboard to find your API key
 
@@ -171,6 +186,7 @@ To enable reaction prediction features:
 **Endpoint:** `POST /api/submit`
 
 **Python Example:**
+
 ```python
 import requests
 from pathlib import Path

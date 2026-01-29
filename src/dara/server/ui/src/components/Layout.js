@@ -1,13 +1,13 @@
-import React from 'react';
-import { Layout as LayoutAntd, BackTop } from 'antd';
-import styled from 'styled-components';
-import HeaderMenu from './HeaderMenu';
-import { Link } from 'gatsby';
-import Halmet from 'react-helmet';
-import favicon from '../images/favicon.ico';
+import React from "react";
+import { Layout as LayoutAntd, BackTop } from "antd";
+import styled from "styled-components";
+import HeaderMenu from "./HeaderMenu";
+import { Link } from "gatsby";
+import Halmet from "react-helmet";
+import favicon from "../images/favicon.ico";
 
-import 'antd/dist/antd.css';
-import './layout.css';
+import "antd/dist/antd.css";
+import "./layout.css";
 
 const BREAK_POINT = 768;
 
@@ -21,10 +21,11 @@ const {
 function Header({ current }) {
   return (
     <HeaderAntd>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Link className='page-title' to='/' style={{ color: 'inherit' }}>
-          <h1 className='page-title-text' 
-            style={{ marginBottom: 0, fontSize: '1.5rem', fontWeight: 600 }}
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Link className="page-title" to="/" style={{ color: "inherit" }}>
+          <h1
+            className="page-title-text"
+            style={{ marginBottom: 0, fontSize: "1.5rem", fontWeight: 600 }}
           >
             Dara
           </h1>
@@ -32,22 +33,33 @@ function Header({ current }) {
         <HeaderMenu current={current}></HeaderMenu>
       </div>
     </HeaderAntd>
-  )
+  );
 }
 
 function Sider() {
-  return (<></>)
+  return <></>;
 }
 
 function Footer() {
   return (
-      <FooterAntd
-        style={{ textAlign: 'center', color: 'rgba(0, 0, 0, 0.7)', fontSize: '0.9em' }}
+    <FooterAntd
+      style={{
+        textAlign: "center",
+        color: "rgba(0, 0, 0, 0.7)",
+        fontSize: "0.9em",
+      }}
+    >
+      Powered by{" "}
+      <a
+        href="https://github.com/idocx/himerometra"
+        target="_blank"
+        rel="noreferrer"
       >
-        Powered by <a href='https://github.com/idocx/himerometra' target='_blank' rel="noreferrer">
-          Himerometra</a>.
-      </FooterAntd>
-  )
+        Himerometra
+      </a>
+      .
+    </FooterAntd>
+  );
 }
 
 const LayoutContainer = styled(LayoutAntd)`
@@ -127,7 +139,7 @@ const LayoutContainer = styled(LayoutAntd)`
     .sider-container {
       display: none !important;
     }
-  
+
     .sider-container-collapsed {
       display: block !important;
     }
@@ -147,37 +159,38 @@ const ContentContainer = styled(LayoutAntd)`
 
 function Layout({ children, hasSider, title }) {
   return (
-      <LayoutContainer className="layout-container">
-        <Halmet>
-          <title>{title ? `${title} | `: ""}Dara | Data-driven automated Rietveld analysis for phase search and refinement</title>
-        </Halmet>
-        <Halmet>
-          <link rel="icon" href={favicon} />
-        </Halmet>
-        <Halmet>
-          <meta charset="utf-8" />
-        </Halmet>
-        <Halmet>
-          <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-        </Halmet>
-        <Halmet>
-          <meta name="keywords" content="Amesp, quantum chemistry, software" />
-        </Halmet>
-        <Halmet>
-          <meta name="subject" content="product website" />
-        </Halmet>
+    <LayoutContainer className="layout-container">
+      <Halmet>
+        <title>
+          {title ? `${title} | ` : ""}Dara | Data-driven automated Rietveld
+          analysis for phase search and refinement
+        </title>
+      </Halmet>
+      <Halmet>
+        <link rel="icon" href={favicon} />
+      </Halmet>
+      <Halmet>
+        <meta charset="utf-8" />
+      </Halmet>
+      <Halmet>
+        <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+      </Halmet>
+      <Halmet>
+        <meta name="keywords" content="Amesp, quantum chemistry, software" />
+      </Halmet>
+      <Halmet>
+        <meta name="subject" content="product website" />
+      </Halmet>
 
-        <Header></Header>
-        <BackTop />
-        <ContentContainer className='main-container'>
-          {hasSider ? <Sider /> : null}
-          <ContentAntd>
-            {children}
-          </ContentAntd>
-        </ContentContainer>
-        <Footer></Footer>
-      </LayoutContainer>
-  )
+      <Header></Header>
+      <BackTop />
+      <ContentContainer className="main-container">
+        {hasSider ? <Sider /> : null}
+        <ContentAntd>{children}</ContentAntd>
+      </ContentContainer>
+      <Footer></Footer>
+    </LayoutContainer>
+  );
 }
 
 export { BREAK_POINT };

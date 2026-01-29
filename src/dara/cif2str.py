@@ -1,4 +1,5 @@
 """Convert CIF to Str format for BGMN."""
+
 from __future__ import annotations
 
 import datetime
@@ -42,9 +43,7 @@ def process_specie_string(sp: str | Specie | Element | DummySpecie) -> str:
         # remove the valence and try again
         specie = re.search(r"[A-Z]+", specie).group(0)
         if specie not in POSSIBLE_SPECIES:
-            raise CIF2StrError(
-                f"Unknown species {specie}, the original specie string is {sp}"
-            )
+            raise CIF2StrError(f"Unknown species {specie}, the original specie string is {sp}")
     return specie
 
 
@@ -141,11 +140,7 @@ def get_std_position(
             aeval = Interpreter(use_numpy=False, symtable=variable_dict)
             wx, wy, wz = (aeval.eval(constraint) for constraint in constraints)
             logger.debug([position, (wx, wy, wz)])
-            if (
-                fuzzy_compare(wx, position[0])
-                and fuzzy_compare(wy, position[1])
-                and fuzzy_compare(wz, position[2])
-            ):
+            if fuzzy_compare(wx, position[0]) and fuzzy_compare(wy, position[1]) and fuzzy_compare(wz, position[2]):
                 return position, True
     logger.debug(
         f"Cannot find the standard position for {wyckoff_letter} {std_notations}, using the first position. "
@@ -193,8 +188,7 @@ def check_wyckoff(
         else:
             sorted_species = sorted(site.species)
             species_string = ",".join(
-                f"{process_specie_string(ssp)}({site.species[ssp]:.6f})"
-                for ssp in sorted_species
+                f"{process_specie_string(ssp)}({site.species[ssp]:.6f})" for ssp in sorted_species
             )
             species_string = f"({species_string})"
 
@@ -213,9 +207,7 @@ def check_wyckoff(
 
 def make_spacegroup_setting_str(spacegroup_setting: dict[str, Any]) -> str:
     """Make the spacegroup setting string."""
-    return (
-        " ".join([f"{k}={v}" for k, v in spacegroup_setting["setting"].items()]) + " //"
-    )
+    return " ".join([f"{k}={v}" for k, v in spacegroup_setting["setting"].items()]) + " //"
 
 
 def make_lattice_parameters_str(
@@ -225,14 +217,10 @@ def make_lattice_parameters_str(
 ) -> str:
     """Make the lattice parameters string."""
     crystal_system = spacegroup_setting["setting"]["Lattice"]
-    lattice_parameters = get_lattice_parameters_from_lattice(
-        structure.lattice, crystal_system
-    )
+    lattice_parameters = get_lattice_parameters_from_lattice(structure.lattice, crystal_system)
 
     if lattice_range == "fixed":
-        lattice_parameters_str = " ".join(
-            [f"{k}={v:.5f}" for k, v in lattice_parameters.items()]
-        )
+        lattice_parameters_str = " ".join([f"{k}={v:.5f}" for k, v in lattice_parameters.items()])
     else:
         lattice_parameters_str = " ".join(
             [
@@ -298,18 +286,12 @@ def cif2str(
     E=O-2 Wyckoff=d x=0.500000 y=0.000000 z=0.000000 TDS=0.010000
 
     """
-    str_path = (
-        cif_path.parent / f"{cif_path.stem}.str"
-        if working_dir is None
-        else working_dir / f"{cif_path.stem}.str"
-    )
+    str_path = cif_path.parent / f"{cif_path.stem}.str" if working_dir is None else working_dir / f"{cif_path.stem}.str"
 
     structure, spg = load_symmetrized_structure(cif_path)
 
     hall_number = str(spg.get_symmetry_dataset().hall_number)
-    with (Path(__file__).parent / "data" / "spglib_db" / "spg.json").open(
-        "r", encoding="utf-8"
-    ) as f:
+    with (Path(__file__).parent / "data" / "spglib_db" / "spg.json").open("r", encoding="utf-8") as f:
         spg_group_db = json.load(f)
     settings = spg_group_db[hall_number]["settings"]
 
@@ -327,13 +309,9 @@ def cif2str(
     if error_count > 0:
         logger.debug(f"CIF file: {cif_path.read_text()}")
         logger.debug(f"Symmetry dataset: {spg.get_symmetry_dataset()}")
-        raise CIF2StrError(
-            f"Cannot find a valid lattice symmetry setting for {cif_path}."
-        )
+        raise CIF2StrError(f"Cannot find a valid lattice symmetry setting for {cif_path}.")
 
-    logger.debug(
-        f"Using setting {spacegroup_setting['setting']} for {cif_path}, with {error_count} errors"
-    )
+    logger.debug(f"Using setting {spacegroup_setting['setting']} for {cif_path}, with {error_count} errors")
 
     # start to construct the str file string
     str_text = ""
@@ -348,12 +326,7 @@ def cif2str(
     str_text += make_spacegroup_setting_str(spacegroup_setting) + "\n"
 
     # add lattice
-    str_text += (
-        make_lattice_parameters_str(
-            spacegroup_setting, structure, lattice_range=lattice_range
-        )
-        + "\n"
-    )
+    str_text += make_lattice_parameters_str(spacegroup_setting, structure, lattice_range=lattice_range) + "\n"
 
     # add RP
     str_text += make_peak_parameter_str(k1, k2, b1, gewicht, rp) + "\n"
@@ -367,8 +340,7 @@ def cif2str(
 
     # add wyckoff positions
     element_settings_str = [
-        " ".join([f"{k}={v}" for k, v in element_setting.items()])
-        for element_setting in element_settings
+        " ".join([f"{k}={v}" for k, v in element_setting.items()]) for element_setting in element_settings
     ]
     str_text += "\n".join(element_settings_str)
 

@@ -58,11 +58,7 @@ class RefinementPhase(BaseModel, frozen=True):
         -------
             RefinementPhase object
         """
-        return (
-            path_obj
-            if isinstance(path_obj, RefinementPhase)
-            else RefinementPhase(path=Path(path_obj))
-        )
+        return path_obj if isinstance(path_obj, RefinementPhase) else RefinementPhase(path=Path(path_obj))
 
 
 def do_refinement(
@@ -78,9 +74,7 @@ def do_refinement(
     """Refine the structure using BGMN."""
     pattern_path = Path(pattern_path)
     working_dir = (
-        Path(working_dir)
-        if working_dir is not None
-        else pattern_path.parent / f"refinement_{pattern_path.stem}"
+        Path(working_dir) if working_dir is not None else pattern_path.parent / f"refinement_{pattern_path.stem}"
     )
 
     if not working_dir.exists():

@@ -97,6 +97,4 @@ def mark_running_jobs_as_fizzled():
             job["end_time"] = datetime.now(tz=timezone.utc)
             job["error"] = "Unexpected shutdown of the worker process."
             worker_store.update(job)
-            logger.warning(
-                f"Job {job['uuid']} marked as fizzled due to previous shutdown."
-            )
+            logger.warning(f"Job {job['uuid']} marked as fizzled due to previous shutdown.")

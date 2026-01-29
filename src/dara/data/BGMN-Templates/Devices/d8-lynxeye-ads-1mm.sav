@@ -50,10 +50,10 @@ R=280
 
 % Note: BGMN requires the width of the slit in mm. For automatic divergence slits we must use
 % trigonometric functions to calculate the with in mm as a function of irradiated length,
-% distance of the slit from the sample, and 2theta angle. 
-% If the distance of the slit is not known exactly, enter a value shorter than the goniometer 
+% distance of the slit from the sample, and 2theta angle.
+% If the distance of the slit is not known exactly, enter a value shorter than the goniometer
 % radius R for HSlitR. It will lead to a different slit opening, but the divergence of the beam
-% will always be correct. HSlitW will calculate the slit width resulting in a irradiated length 
+% will always be correct. HSlitW will calculate the slit width resulting in a irradiated length
 % of "irr" mm.
 
 % irradiated length (mm)
@@ -113,7 +113,7 @@ SColl=0.0218
 % Anti-Scatter slit
 %-----------------------------------------------------------------------------------------------
 
-% Note: An anti-scatter slit of 2.38 was used. I'm assuming it is given in °, and I'm 
+% Note: An anti-scatter slit of 2.38 was used. I'm assuming it is given in °, and I'm
 % calculating the opening in mm as a function of a randomly chosen distance.
 
 % opening in degrees

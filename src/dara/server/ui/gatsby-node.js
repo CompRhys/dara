@@ -1,8 +1,8 @@
-const path = require("path")
+const path = require("path");
 
 exports.createPages = async ({ actions, graphql }) => {
-  const { createPage } = actions
-  const mdTemplates = path.resolve(`src/templates/mdTemplates.js`)
+  const { createPage } = actions;
+  const mdTemplates = path.resolve(`src/templates/mdTemplates.js`);
 
   const result = await graphql(`
     {
@@ -16,11 +16,11 @@ exports.createPages = async ({ actions, graphql }) => {
         }
       }
     }
-  `)
+  `);
 
   if (result.errors) {
-    reporter.panicOnBuild(`Error while running GraphQL query.`)
-    return
+    reporter.panicOnBuild(`Error while running GraphQL query.`);
+    return;
   }
 
   result.data.allMarkdownRemark.edges.forEach(({ node }) => {
@@ -29,7 +29,7 @@ exports.createPages = async ({ actions, graphql }) => {
       component: mdTemplates,
       context: {
         slug: `${node.frontmatter.slug}`,
-      }
-    })
-  })
-}
+      },
+    });
+  });
+};

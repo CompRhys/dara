@@ -55,7 +55,7 @@ make -j4
 make install
 ```
 
-Unfortunately, you can’t set *LD_LIBRARY_PATH* without breaking everything. Instead, we take this approach:
+Unfortunately, you can’t set _LD_LIBRARY_PATH_ without breaking everything. Instead, we take this approach:
 
 #### Installation of Patchelf
 

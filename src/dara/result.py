@@ -43,9 +43,7 @@ class PhaseResult(BaseModel):
     beta: Optional[Union[float, tuple[float, float]]] = Field(None, alias="BETA")
     gamma: Optional[Union[float, tuple[float, float]]] = Field(None, alias="GAMMA")
 
-    atom_positions_string: Optional[str] = Field(
-        None, alias="Atomic positions for phase"
-    )
+    atom_positions_string: Optional[str] = Field(None, alias="Atomic positions for phase")
 
     @model_validator(mode="before")
     @classmethod
@@ -82,9 +80,7 @@ class PhaseResult(BaseModel):
             "beta": self.beta,
             "gamma": self.gamma,
         }
-        lattice_data = {
-            k: get_number(v) for k, v in lattice_data.items() if v is not None
-        }
+        lattice_data = {k: get_number(v) for k, v in lattice_data.items() if v is not None}
         for k in ["a", "b", "c"]:
             if k in lattice_data:
                 lattice_data[k] = lattice_data[k] * 10
@@ -92,9 +88,7 @@ class PhaseResult(BaseModel):
         crystal_system = spacegroup.crystal_system
         if crystal_system == "trigonal":
             crystal_system = "hexagonal"
-        lattice = getattr(Lattice, crystal_system, Lattice.from_parameters)(
-            **lattice_data
-        )
+        lattice = getattr(Lattice, crystal_system, Lattice.from_parameters)(**lattice_data)
 
         # get species and coords
         all_coords = []
@@ -107,9 +101,7 @@ class PhaseResult(BaseModel):
             all_coords.append(coords)
 
             species = {}
-            specie_stirng = re.search(r"E=\((.+)\)", line[-1]).group(
-                1
-            )  # Sp(Occ), Sp(Occ), ...
+            specie_stirng = re.search(r"E=\((.+)\)", line[-1]).group(1)  # Sp(Occ), Sp(Occ), ...
             for specie in specie_stirng.split(","):
                 specie_string = specie.split("(")[0].capitalize()
                 # parse the specie into pymatgen Species
@@ -340,9 +332,7 @@ def parse_lst(lst_path: Path, phase_names: list[str]) -> LstResult:
     with lst_path.open() as f:
         texts = f.read()
 
-    pattern_name = re.search(r"Rietveld refinement to file\(s\) (.+?)\n", texts).group(
-        1
-    )
+    pattern_name = re.search(r"Rietveld refinement to file\(s\) (.+?)\n", texts).group(1)
     result = {"raw_lst": texts, "pattern_name": pattern_name}
 
     num_steps = int(re.search(r"(\d+) iteration steps", texts).group(1))
@@ -350,21 +340,11 @@ def parse_lst(lst_path: Path, phase_names: list[str]) -> LstResult:
 
     for var in ["Rp", "Rpb", "R", "Rwp", "Rexp"]:
         result[var] = float(re.search(rf"{var}=(\d+(\.\d+)?)%", texts).group(1))
-    result["d"] = (
-        float(d.group(1))
-        if (d := re.search(r"Durbin-Watson d=(\d+(\.\d+)?)", texts))
-        else None
-    )
-    result["1-rho"] = (
-        float(rho.group(1))
-        if (rho := re.search(r"1-rho=(\d+(\.\d+)?)%", texts))
-        else None
-    )
+    result["d"] = float(d.group(1)) if (d := re.search(r"Durbin-Watson d=(\d+(\.\d+)?)", texts)) else None
+    result["1-rho"] = float(rho.group(1)) if (rho := re.search(r"1-rho=(\d+(\.\d+)?)%", texts)) else None
 
     # global goals
-    global_parameters_text = re.search(
-        r"Global parameters and GOALs\n(.*?)\n(?:\n|\Z)", texts, re.DOTALL
-    )
+    global_parameters_text = re.search(r"Global parameters and GOALs\n(.*?)\n(?:\n|\Z)", texts, re.DOTALL)
     if global_parameters_text:
         global_parameters_text = global_parameters_text.group(1)
         global_parameters = parse_section(global_parameters_text)
@@ -378,11 +358,11 @@ def parse_lst(lst_path: Path, phase_names: list[str]) -> LstResult:
 
     result["phases_results"] = {
         phase_name: parse_section(phase_result)
-        for phase_name, phase_result in zip(phase_names, phases_results)
+        for phase_name, phase_result in zip(phase_names, phases_results, strict=False)
     }
 
     # add atomic positions
-    for phase_name, phase_result in zip(phase_names, phases_results):
+    for phase_name, phase_result in zip(phase_names, phases_results, strict=False):
         atom_section = re.search(
             r"Atomic positions for phase .+?\n(-+)\n(.*?)$",
             phase_result,
@@ -415,9 +395,7 @@ def parse_dia(dia_path: Path, phase_names: list[str]) -> DiaResult:
         "y_obs": raw_data[:, 1].tolist(),
         "y_calc": raw_data[:, 2].tolist(),
         "y_bkg": raw_data[:, 3].tolist(),
-        "structs": {
-            name: raw_data[:, i + 4].tolist() for i, name in enumerate(phase_names)
-        },
+        "structs": {name: raw_data[:, i + 4].tolist() for i, name in enumerate(phase_names)},
     }
     return DiaResult(**data)
 
@@ -489,9 +467,7 @@ def parse_par(par_file: Path, phase_names: list[str]) -> pd.DataFrame:
     peak_phase_names = list(dict.fromkeys(all_peak_phase_names))
     phase_names_mapping = {
         peak_phase_name: (phase_name, i)
-        for i, (peak_phase_name, phase_name) in enumerate(
-            zip(peak_phase_names, phase_names)
-        )
+        for i, (peak_phase_name, phase_name) in enumerate(zip(peak_phase_names, phase_names, strict=False))
     }
 
     for i in range(1, peak_num + 1):
@@ -537,17 +513,10 @@ def parse_par(par_file: Path, phase_names: list[str]) -> pd.DataFrame:
                 peak_list.append([d_inv, intensity, b1, b2, h, k, l, phase, idx])
 
     # from d_inv to two theta
-    two_theta = (
-        np.arcsin(wavelength * np.array([p[0] for p in peak_list]) / 2)
-        * 180
-        / np.pi
-        * 2
-    )
+    two_theta = np.arcsin(wavelength * np.array([p[0] for p in peak_list]) / 2) * 180 / np.pi * 2
 
     # apply eps1 and eps2
     two_theta += angular_correction(two_theta, eps1, eps2)
-    peak_list = [
-        [two_theta[i]] + peak_list[i][1:] for i in range(len(peak_list))  # noqa: RUF005
-    ]
+    peak_list = [[two_theta[i]] + peak_list[i][1:] for i in range(len(peak_list))]
 
     return _make_dataframe(peak_list)

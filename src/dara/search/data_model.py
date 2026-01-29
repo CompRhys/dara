@@ -51,9 +51,7 @@ class SearchNodeData(BaseModel):
         if is_root_node:
             phase_string = "Root "
             if len(self.current_phases) > 1:
-                phase_string += (
-                    f"({', '.join([p.path.stem for p in self.current_phases])}) "
-                )
+                phase_string += f"({', '.join([p.path.stem for p in self.current_phases])}) "
             return phase_string
 
         import colorful as cf
@@ -104,8 +102,7 @@ class SearchResult(BaseModel):
         for phases in self.phases:
             grouped_phase = get_compositional_clusters([p.path for p in phases])
             grouped_phase_with_head = [
-                (get_head_of_compositional_cluster(cluster), cluster)
-                for cluster in grouped_phase
+                (get_head_of_compositional_cluster(cluster), cluster) for cluster in grouped_phase
             ]
             grouped_phases.append(grouped_phase_with_head)
         return grouped_phases
