@@ -166,6 +166,7 @@ ignore = [
     "B904", # Within an except clause, raise exceptions with ...
     "C408", # unnecessary-collection-call
     "D", # Missing docstring in magic method
+    "E741",  # Ambiguous variable name
     "PD011", # pandas-use-of-dot-values
     "PERF203", # try-except-in-loop
     "PERF401", # manual-list-comprehension (TODO fix these or wait for autofix)
@@ -202,10 +203,8 @@ no_implicit_optional = false
 follow_imports = "skip"
 disable_error_code = "annotation-unchecked"
 
-[tool.pytest]
-addopts = "--durations=10"
-
 [tool.pytest.ini_options]
+addopts = "--durations=10"
 testpaths = "tests"
 
 [tool.setuptools.package-data]
@@ -217,4 +216,4 @@ testpaths = "tests"
 enabled = true
 
 [tool.codespell]
-ignore-words-list = ["sav", "STRUC", "atomate", "DIAGRAMM", "fom", "TITEL"]
+ignore-words-list = ["sav", "STRUC", "atomate", "DIAGRAMM", "fom", "TITEL", "structur", "calculat"]

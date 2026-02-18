@@ -12,6 +12,8 @@ from monty.serialization import dumpfn
 from pymatgen.core import Composition
 
 from dara.cif import Cif
+from dara.cif2str import STRPhaseParameters
+from dara.generate_control_file import RefinementParametersParameters
 from dara.prediction.core import PhasePredictor
 from dara.refine import RefinementPhase, do_refinement, do_refinement_no_saving
 from dara.schema import PhaseSearchDocument, RefinementDocument
@@ -42,7 +44,7 @@ class RefinementMaker(Maker):
 
     name: str = "refine"
     save: bool = True
-    refinement_params: dict | None = None
+    refinement_params: RefinementParametersParameters | dict | None = None
     show_progress: bool = True
 
     @job(output_schema=RefinementDocument)
@@ -50,7 +52,7 @@ class RefinementMaker(Maker):
         self,
         xrd_data: XRDData,
         cifs: list[Cif],
-        phase_params: dict | None = None,
+        phase_params: STRPhaseParameters | None = None,
         instrument_name: str = "Aeris-fds-Pixcel1d-Medipix3",
     ):
         """Perform Rietveld refinement.
@@ -76,8 +78,8 @@ class RefinementMaker(Maker):
 
         args = {
             "pattern_path": pattern_path,
-            "phase_paths": phase_paths,
-            "instrument_name": instrument_name,
+            "phases": phase_paths,
+            "instrument_profile": instrument_name,
             "phase_params": phase_params,
             "refinement_params": self.refinement_params,
             "show_progress": self.show_progress,
@@ -119,7 +121,7 @@ class PhaseSearchMaker(Maker):
         precursors: list[str] | None = None,
         predict_kwargs: dict | None = None,
         search_kwargs: dict | None = None,
-        final_refinement_params: dict | None = None,
+        final_refinement_params: STRPhaseParameters | None = None,
         computed_entries=None,
     ):
         """Perform phase search.
@@ -154,13 +156,13 @@ class PhaseSearchMaker(Maker):
             search_kwargs["instrument_profile"] = search_kwargs.pop("instrument_name")
 
         if final_refinement_params is None:
-            final_refinement_params = {
-                "gewicht": "SPHAR4",
-                "lattice_range": 0.02,
-                "k1": "0_0^1",
-                "k2": "0_0^0.001",
-                "b1": "0_0^0.05",
-            }
+            final_refinement_params = STRPhaseParameters(
+                gewicht="SPHAR4",
+                lattice_range=0.02,
+                k1="0_0^1",
+                k2="0_0^0.001",
+                b1="0_0^0.05",
+            )
 
         pattern_path = directory / "xrd_data.xy"
         cifs_path = directory / self.cifs_folder_name
@@ -214,7 +216,10 @@ class PhaseSearchMaker(Maker):
             additional_cifs_name_set = {cif.name for cif in additional_cifs}
             for i in range(len(cif_paths)):
                 if cif_paths[i].stem in additional_cifs_name_set:
-                    cif_paths[i] = RefinementPhase(path=cif_paths[i], params=additional_cif_params or {})
+                    cif_paths[i] = RefinementPhase(
+                        path=cif_paths[i],
+                        params=additional_cif_params if additional_cif_params is not None else STRPhaseParameters(),
+                    )
 
         results = search_phases(pattern_path=pattern_path, phases=cif_paths, **search_kwargs)
         self._save_results(results)
@@ -238,7 +243,7 @@ class PhaseSearchMaker(Maker):
 
             shutil.copytree(directory / best_dir, best_dir_path)
             shutil.copy(pattern_path, best_dir_path)
-            dumpfn(final_refinement_params, best_dir_path / "phase_params.json")
+            dumpfn(final_refinement_params.model_dump(), best_dir_path / "phase_params.json")
 
             logger.info("Performing final refinement on best result...")
             best_phases = []

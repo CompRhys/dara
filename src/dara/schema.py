@@ -6,6 +6,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from pymatgen.core import Composition
 
 from dara.cif import Cif
+from dara.cif2str import STRPhaseParameters
+from dara.generate_control_file import RefinementParametersParameters
 from dara.prediction.core import PhasePredictor
 from dara.result import RefinementResult
 from dara.utils import datetime_str
@@ -28,8 +30,10 @@ class RefinementDocument(BaseModel):
     rwp: Optional[float] = Field(None, description="The Rwp of the refinement.")
     xrd_data: XRDData = Field(description="The input XRD data.")
     # input_cifs: list[Cif] = Field(description="The input CIFs.")
-    refinement_params: Optional[dict] = Field(None, description="The refinement parameters.")
-    phase_params: Optional[dict] = Field(None, description="The phase parameters.")
+    refinement_params: Optional[RefinementParametersParameters] = Field(
+        None, description="The SAV-level refinement parameters."
+    )
+    phase_params: Optional[STRPhaseParameters] = Field(None, description="The phase parameters.")
     instrument_name: Optional[str] = Field(None, description="The instrument name.")
 
 
@@ -64,7 +68,7 @@ class PhaseSearchDocument(BaseModel):
     phase_predictor: Optional[PhasePredictor] = Field(None, description="The phase predictor.")
     predict_kwargs: Optional[dict] = Field(None, description="The kwargs for the phase predictor.")
     search_kwargs: Optional[dict] = Field(None, description="The kwargs for the search.")
-    final_refinement_params: Optional[dict] = Field(None, description="The final refinement parameters.")
+    final_refinement_params: Optional[STRPhaseParameters] = Field(None, description="The final refinement parameters.")
     run_final_refinement: bool = Field(None, description="Whether to run final refinement.")
     cifs_folder_name: str = Field(None, description="The name of the folder containing the CIFs.")
 

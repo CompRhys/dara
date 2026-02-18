@@ -15,7 +15,8 @@ from sklearn.cluster import AgglomerativeClustering
 from treelib import Node, Tree
 
 from dara import do_refinement_no_saving
-from dara.cif2str import CIF2StrError
+from dara.cif2str import CIF2StrError, STRPhaseParameters
+from dara.generate_control_file import RefinementParametersParameters
 from dara.peak_detection import detect_peaks
 from dara.refine import RefinementPhase
 from dara.search.data_model import SearchNodeData, SearchResult
@@ -42,10 +43,9 @@ logger = get_logger(__name__, level="INFO")
 def remote_do_refinement_no_saving(
     pattern_path: Path,
     cif_paths: list[Path],
-    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float,
     instrument_profile: str | Path,
-    phase_params: dict[str, ...] | None,
-    refinement_params: dict[str, float] | None,
+    phase_params: STRPhaseParameters | dict | None,
+    refinement_params: RefinementParametersParameters | dict | None,
 ) -> RefinementResult | None:
     """
     Perform the actual refinement in the remote process.
@@ -58,7 +58,6 @@ def remote_do_refinement_no_saving(
         result = do_refinement_no_saving(
             pattern_path,
             cif_paths,
-            wavelength=wavelength,
             instrument_profile=instrument_profile,
             phase_params=phase_params,
             refinement_params=refinement_params,
@@ -115,16 +114,14 @@ def batch_peak_matching(
 def batch_refinement(
     pattern_path: Path,
     cif_paths: list[list[RefinementPhase]],
-    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float = "Cu",
     instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
-    phase_params: dict[str, ...] | None = None,
-    refinement_params: dict[str, float] | None = None,
+    phase_params: STRPhaseParameters | dict | None = None,
+    refinement_params: RefinementParametersParameters | dict | None = None,
 ) -> list[RefinementResult]:
     handles = [
         remote_do_refinement_no_saving.remote(
             pattern_path,
             cif_paths,
-            wavelength=wavelength,
             instrument_profile=instrument_profile,
             phase_params=phase_params,
             refinement_params=refinement_params,
@@ -344,15 +341,14 @@ class BaseSearchTree(Tree):
         pattern_path: Path,
         all_phases_result: dict[RefinementPhase, RefinementResult] | None,
         peak_obs: np.ndarray | None,
-        refine_params: dict[str, ...] | None,
-        phase_params: dict[str, ...] | None,
+        phase_params: STRPhaseParameters | dict | None,
         intensity_threshold: float,
-        wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float,
         instrument_profile: str | Path,
         express_mode: bool,
         maximum_grouping_distance: float,
         max_phases: float,
         rpb_threshold: float,
+        refinement_params: RefinementParametersParameters | dict | None = None,
         pinned_phases: list[RefinementPhase] | None = None,
         record_peak_matcher_scores: bool = False,
         *args,
@@ -362,10 +358,9 @@ class BaseSearchTree(Tree):
 
         self.pattern_path = pattern_path
         self.rpb_threshold = rpb_threshold
-        self.refinement_params = refine_params if refine_params is not None else {}
-        self.phase_params = phase_params if phase_params is not None else {}
+        self.refinement_params = RefinementParametersParameters.coerce(refinement_params)
+        self.phase_params = STRPhaseParameters.coerce(phase_params)
         self.intensity_threshold = intensity_threshold
-        self.wavelength = wavelength
         self.instrument_profile = instrument_profile
         self.express_mode = express_mode
         self.maximum_grouping_distance = maximum_grouping_distance
@@ -751,7 +746,6 @@ class BaseSearchTree(Tree):
         return batch_refinement(
             self.pattern_path,
             all_references,
-            wavelength=self.wavelength,
             instrument_profile=self.instrument_profile,
             phase_params=self.phase_params,
             refinement_params=self.refinement_params,
@@ -767,10 +761,9 @@ class BaseSearchTree(Tree):
             all_phases_result=self.all_phases_result,
             peak_obs=self.peak_obs,
             rpb_threshold=self.rpb_threshold,
-            refine_params=self.refinement_params,
+            refinement_params=self.refinement_params,
             phase_params=self.phase_params,
             intensity_threshold=self.intensity_threshold,
-            wavelength=self.wavelength,
             instrument_profile=self.instrument_profile,
             maximum_grouping_distance=self.maximum_grouping_distance,
             pinned_phases=self.pinned_phases,
@@ -800,10 +793,9 @@ class BaseSearchTree(Tree):
             all_phases_result=search_tree.all_phases_result,
             peak_obs=search_tree.peak_obs,
             rpb_threshold=search_tree.rpb_threshold,
-            refine_params=search_tree.refinement_params,
+            refinement_params=search_tree.refinement_params,
             phase_params=search_tree.phase_params,
             intensity_threshold=search_tree.intensity_threshold,
-            wavelength=search_tree.wavelength,
             instrument_profile=search_tree.instrument_profile,
             express_mode=search_tree.express_mode,
             maximum_grouping_distance=search_tree.maximum_grouping_distance,
@@ -842,7 +834,7 @@ class SearchTree(BaseSearchTree):
         pattern_path: the path to the pattern
         cif_paths: the paths to the CIF files
         pinned_phases: the phases that will be included in all the refinement
-        refine_params: the refinement parameters, it will be passed to the refinement function.
+        refinement_params: SAV-level control parameters (RefinementParametersParameters).
         phase_params: the phase parameters, it will be passed to the refinement function.
         instrument_profile: the name/path of the instrument file, it will be passed to the refinement function.
         maximum_grouping_distance: the maximum grouping distance, default to 0.1
@@ -855,9 +847,8 @@ class SearchTree(BaseSearchTree):
         pattern_path: Path | str,
         cif_paths: list[RefinementPhase | Path | str],
         pinned_phases: list[RefinementPhase | Path | str] | None = None,
-        refine_params: dict[str, ...] | None = None,
-        phase_params: dict[str, ...] | None = None,
-        wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float = "Cu",
+        phase_params: STRPhaseParameters | dict | None = None,
+        refinement_params: RefinementParametersParameters | dict | None = None,
         instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
         express_mode: bool = True,
         enable_angular_cut: bool = True,
@@ -865,10 +856,28 @@ class SearchTree(BaseSearchTree):
         max_phases: float = 5,
         rpb_threshold: float = 4,
         record_peak_matcher_scores: bool = False,
+        # deprecated — prefer refinement_params
+        wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float | None = None,
+        refine_params: dict[str, ...] | None = None,
         *args,
         **kwargs,
     ):
         pattern_path = Path(pattern_path)
+
+        # backward compat: fold legacy args into refinement_params
+        if refine_params is not None or wavelength is not None:
+            legacy = dict(refine_params or {})
+            if wavelength is not None:
+                legacy.setdefault("wavelength", wavelength)
+            if refinement_params is None:
+                refinement_params = RefinementParametersParameters(**legacy)
+            else:
+                _sp = (
+                    refinement_params
+                    if isinstance(refinement_params, RefinementParametersParameters)
+                    else RefinementParametersParameters(**refinement_params)
+                )
+                refinement_params = _sp.model_copy(update={k: v for k, v in legacy.items() if v is not None})
 
         # remove duplicates
         self.cif_paths = list({RefinementPhase.make(cif_path) for cif_path in cif_paths})
@@ -886,24 +895,22 @@ class SearchTree(BaseSearchTree):
             pattern_path,
             None,
             None,
-            refine_params,
             phase_params,
             0.0,
-            wavelength,
             instrument_profile,
             express_mode,
             maximum_grouping_distance,
             max_phases,
             rpb_threshold,
-            self.pinned_phases,
-            record_peak_matcher_scores,
-            *args,
+            refinement_params=refinement_params,
+            pinned_phases=self.pinned_phases,
+            record_peak_matcher_scores=record_peak_matcher_scores,
             **kwargs,
         )
 
         # side effect: if enable_angular_cut is set to True (default),
-        # sets self.peak_obs and self.refinement_params["wmax"] in the function
-        # for all situation, will also update the initial guess of b1 in self.refinement_params
+        # sets self.peak_obs and self.refinement_params.wmax in the function
+        # for all situations, will also update the initial guess of b1 in self.phase_params
         self.enable_angular_cut = enable_angular_cut
         self._detect_peak_in_pattern()
 
@@ -960,16 +967,16 @@ class SearchTree(BaseSearchTree):
 
     def _detect_peak_in_pattern(self) -> pd.DataFrame:
         logger.info("Detecting peaks in the pattern.")
-        if self.enable_angular_cut and self.refinement_params.get("wmax", None) is not None:
+        if self.enable_angular_cut and self.refinement_params.wmax is not None:
             warnings.warn(
-                f"The wmax ({self.refinement_params['wmax']}) in refinement_params "
+                f"The wmax ({self.refinement_params.wmax}) in refinement_params "
                 f"will be ignored. The wmax will be automatically adjusted."
             )
         peak_list = detect_peaks(
             self.pattern_path,
-            wavelength=self.wavelength,
+            wavelength=self.refinement_params.wavelength,
             instrument_profile=self.instrument_profile,
-            wmin=self.refinement_params.get("wmin", None),
+            wmin=self.refinement_params.wmin,
             wmax=None,
         )
         if len(peak_list) == 0:
@@ -980,25 +987,26 @@ class SearchTree(BaseSearchTree):
         if self.enable_angular_cut:
             optimal_wmax = get_optimal_max_two_theta(peak_list)
             logger.info(f"The wmax is automatically adjusted to {optimal_wmax}.")
-            self.refinement_params["wmax"] = optimal_wmax
-            self.peak_obs = peak_list_array[np.where(peak_list_array[:, 0] < self.refinement_params["wmax"])]
+            self.refinement_params = self.refinement_params.model_copy(update={"wmax": optimal_wmax})
+            self.peak_obs = peak_list_array[np.where(peak_list_array[:, 0] < self.refinement_params.wmax)]
         else:
             self.peak_obs = peak_list_array
 
         # estimate the mean b1 value from the pattern
         estimated_b1 = np.mean(peak_list["b1"].dropna().values)
-        initial, lower, upper = parse_refinement_param(self.phase_params["b1"])
+        initial, lower, upper = parse_refinement_param(self.phase_params.b1)
         if not isinstance(initial, Number) and estimated_b1 is not None:
             if lower is not None and estimated_b1 < lower:
                 estimated_b1 = lower + 0.1 * abs(upper - lower)
             if upper is not None and estimated_b1 > upper:
                 estimated_b1 = upper - 0.1 * abs(upper - lower)
-            self.phase_params["b1"] = (
+            new_b1 = (
                 f"{estimated_b1:.6f}"
                 + (f"_{lower}" if lower is not None else "")
                 + (f"^{upper}" if upper is not None else "")
             )
-            logger.info(f"The initial value of b1 is automatically set to {self.refinement_params['b1']}.")
+            self.phase_params = self.phase_params.model_copy(update={"b1": new_b1})
+            logger.info(f"The initial value of b1 is automatically set to {new_b1}.")
 
         return peak_list
 
@@ -1021,7 +1029,7 @@ class SearchTree(BaseSearchTree):
         )
 
         # adjust the initial value of eps1 based on the weighted average of all the phases
-        if not isinstance(self.refinement_params.get("eps1", 0), Number):
+        if not isinstance(self.refinement_params.eps1, Number):
             weighted_eps1 = 0
             rwp_sum = 0
 
@@ -1030,16 +1038,17 @@ class SearchTree(BaseSearchTree):
                     weighted_eps1 += 1 / (result.lst_data.rwp + 1e-1) * get_number(result.lst_data.EPS1)
                     rwp_sum += result.lst_data.rwp
             weighted_eps1 /= rwp_sum
-            _, eps1_lower, eps1_upper = parse_refinement_param(self.refinement_params["eps1"])
-            self.refinement_params["eps1"] = (
+            _, eps1_lower, eps1_upper = parse_refinement_param(self.refinement_params.eps1)
+            new_eps1 = (
                 f"{weighted_eps1:.6f}"
                 + (f"_{eps1_lower}" if eps1_lower is not None else "")
                 + (f"^{eps1_upper}" if eps1_upper is not None else "")
             )
-            logger.info(f"The initial value of eps1 is automatically set to {self.refinement_params['eps1']}.")
+            self.refinement_params = self.refinement_params.model_copy(update={"eps1": new_eps1})
+            logger.info(f"The initial value of eps1 is automatically set to {new_eps1}.")
 
         # adjust the initial value of eps2 based on the weighted average of all the phases
-        if not isinstance(self.refinement_params.get("eps2", 0), Number):
+        if not isinstance(self.refinement_params.eps2, Number):
             weighted_eps2 = 0
             rwp_sum = 0
 
@@ -1048,13 +1057,14 @@ class SearchTree(BaseSearchTree):
                     weighted_eps2 += 1 / (result.lst_data.rwp + 1e-1) * get_number(result.lst_data.EPS2)
                     rwp_sum += result.lst_data.rwp
             weighted_eps2 /= rwp_sum
-            _, eps2_lower, eps2_upper = parse_refinement_param(self.refinement_params["eps2"])
-            self.refinement_params["eps2"] = (
+            _, eps2_lower, eps2_upper = parse_refinement_param(self.refinement_params.eps2)
+            new_eps2 = (
                 f"{weighted_eps2:.6f}"
                 + (f"_{eps2_lower}" if eps2_lower is not None else "")
                 + (f"^{eps2_upper}" if eps2_upper is not None else "")
             )
-            logger.info(f"The initial value of eps2 is automatically set to {self.refinement_params['eps2']}.")
+            self.refinement_params = self.refinement_params.model_copy(update={"eps2": new_eps2})
+            logger.info(f"The initial value of eps2 is automatically set to {new_eps2}.")
 
         # adjust the initial value of k1 and b1 for each phase based on the refinement result
         all_phases_result_updated = {}
@@ -1063,21 +1073,29 @@ class SearchTree(BaseSearchTree):
                 k1 = get_number(result.lst_data.phases_results[phase.path.stem].k1)
                 b1 = get_number(result.lst_data.phases_results[phase.path.stem].B1)
 
-                k1_initial, k1_lower, k1_upper = parse_refinement_param(phase.params.get("k1", self.phase_params["k1"]))
+                # Use per-phase value; if it's still the model default, prefer the global default
+                _default_k1 = STRPhaseParameters.model_fields["k1"].default
+                phase_k1 = phase.params.k1 if phase.params.k1 != _default_k1 else self.phase_params.k1
+                k1_initial, k1_lower, k1_upper = parse_refinement_param(phase_k1)
                 k1 = k1 or k1_initial
-                phase.params["k1"] = (
+                new_k1 = (
                     f"{k1:.6f}"
                     + (f"_{k1_lower}" if k1_lower is not None else "")
                     + (f"^{k1_upper}" if k1_upper is not None else "")
                 )
 
-                b1_initial, b1_lower, b1_upper = parse_refinement_param(phase.params.get("b1", self.phase_params["b1"]))
+                _default_b1 = STRPhaseParameters.model_fields["b1"].default
+                phase_b1 = phase.params.b1 if phase.params.b1 != _default_b1 else self.phase_params.b1
+                b1_initial, b1_lower, b1_upper = parse_refinement_param(phase_b1)
                 b1 = b1 or b1_initial
-                phase.params["b1"] = (
+                new_b1 = (
                     f"{b1:.6f}"
                     + (f"_{b1_lower}" if b1_lower is not None else "")
                     + (f"^{b1_upper}" if b1_upper is not None else "")
                 )
+
+                updated_params = phase.params.model_copy(update={"k1": new_k1, "b1": new_b1})
+                phase = RefinementPhase(path=phase.path, params=updated_params)
 
             all_phases_result_updated[phase] = result
 

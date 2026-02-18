@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING, Literal
 
 import ray
 
+from dara.cif2str import STRPhaseParameters
+from dara.generate_control_file import RefinementParametersParameters
 from dara.search.tree import BaseSearchTree, SearchTree
 
 if TYPE_CHECKING:
@@ -16,16 +18,6 @@ if TYPE_CHECKING:
 
     from dara.refine import RefinementPhase
     from dara.search.data_model import SearchResult
-
-DEFAULT_PHASE_PARAMS = {
-    "gewicht": "0_0",
-    "lattice_range": 0.01,
-    "k1": "0_0^0.01",
-    "k2": "fixed",
-    "b1": "0_0^0.005",
-    "rp": 4,
-}
-DEFAULT_REFINEMENT_PARAMS = {"n_threads": 8, "eps1": 0, "eps2": "0_-0.05^0.05"}
 
 
 @ray.remote
@@ -50,15 +42,15 @@ def search_phases(
     phases: list[Path | str | RefinementPhase],
     pinned_phases: list[Path | str | RefinementPhase] | None = None,
     max_phases: int = 5,
-    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float = "Cu",
     instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
     express_mode: bool = True,
     enable_angular_cut: bool = True,
-    phase_params: dict[str, ...] | None = None,
-    refinement_params: dict[str, ...] | None = None,
+    phase_params: STRPhaseParameters | dict | None = None,
+    refinement_params: RefinementParametersParameters | dict | None = None,
     return_search_tree: bool = False,
     record_peak_matcher_scores: bool = False,
     rpb_threshold: float = 2,
+    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float | None = None,
 ) -> list[SearchResult] | SearchTree:
     """
     Search for the best phases to use for refinement.
@@ -68,40 +60,41 @@ def search_phases(
         phases: the paths to the CIF files
         pinned_phases: the paths to the pinned phases, which will be included in all the results
         max_phases: the maximum number of phases to refine
-        wavelength: the wavelength of the X-ray. It can be either a float or one of the following strings:
-            "Cu", "Co", "Cr", "Fe", "Mo", indicating the material of the X-ray source
         instrument_profile: the name of the instrument, or the path to the instrument configuration file (.geq)
         express_mode: whether to use express mode. In express mode, the phases will be grouped first before
             searching, which can significantly speed up the search process.
         enable_angular_cut: whether to enable angular cut, which will run the search on a reduced pattern range
             (wmin, wmax) to speed up the search process.
         phase_params: the parameters for the phase search
-        refinement_params: the parameters for the refinement
+        refinement_params: SAV-level control parameters (RefinementParametersParameters).
         return_search_tree: whether to return the search tree. This is mainly used for debugging purposes.
         record_peak_matcher_scores: whether to record the peak matcher scores. This is mainly used for
             debugging purposes.
         rpb_threshold: the RPB threshold
     """
-    if phase_params is None:
-        phase_params = {}
+    phase_params = STRPhaseParameters.coerce(phase_params)
 
-    if refinement_params is None:
-        refinement_params = {}
+    # backward compat: fold legacy wavelength into refinement_params
+    if wavelength is not None:
+        if refinement_params is None:
+            refinement_params = {"wavelength": wavelength}
+        elif isinstance(refinement_params, dict):
+            refinement_params.setdefault("wavelength", wavelength)
+        else:
+            refinement_params = refinement_params.model_copy(update={"wavelength": wavelength})
+
+    refinement_params = RefinementParametersParameters.coerce(refinement_params)
 
     if not ray.is_initialized():
         ray.init(runtime_env={"working_dir": None})
-
-    phase_params = {**DEFAULT_PHASE_PARAMS, **phase_params}
-    refinement_params = {**DEFAULT_REFINEMENT_PARAMS, **refinement_params}
 
     # build the search tree
     search_tree = SearchTree(
         pattern_path=pattern_path,
         cif_paths=phases,
         pinned_phases=pinned_phases,
-        refine_params=refinement_params,
         phase_params=phase_params,
-        wavelength=wavelength,
+        refinement_params=refinement_params,
         instrument_profile=instrument_profile,
         express_mode=express_mode,
         enable_angular_cut=enable_angular_cut,

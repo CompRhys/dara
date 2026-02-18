@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from asteval import Interpreter
+from pydantic import BaseModel, Field, field_validator
 
 from dara.utils import (
     POSSIBLE_SPECIES,
@@ -26,6 +27,82 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.WARNING)
+
+# Matches BGMN refinement param strings: "value" or "value_lower^upper"
+_REFINEMENT_PARAM_RE = re.compile(r"^[-+]?\d*\.?\d+(_[-+]?\d*\.?\d+\^[-+]?\d*\.?\d+)?$")
+
+
+def _validate_refinement_param(v: str, field_name: str) -> str:
+    """Validate a BGMN refinement parameter string."""
+    if v == "fixed":
+        return v
+    if not _REFINEMENT_PARAM_RE.match(v):
+        raise ValueError(
+            f"Invalid refinement parameter for '{field_name}': '{v}'. "
+            "Expected 'fixed', 'value', or 'value_lower^upper' "
+            "(e.g. '0_0^0.01', '0.005_0.0^0.02')."
+        )
+    return v
+
+
+GewichtType = Literal[
+    "0_0",
+    "SPHAR0",
+    "SPHAR2",
+    "SPHAR4",
+    "SPHAR6",
+    "SPHAR8",
+    "SPHAR10",
+]
+
+
+class STRPhaseParameters(BaseModel):
+    """Parameters for a BGMN STR phase file (passed to cif2str).
+
+    See http://www.bgmn.de/structur.html for full documentation.
+    """
+
+    # --- Lattice ---
+    lattice_range: float | Literal["fixed"] = Field(
+        default=0.01,
+        description="Fractional range for lattice parameter refinement, or 'fixed' to lock them.",
+    )
+
+    # --- Peak profile ---
+    rp: int = Field(default=4, description="Peak profile function number.")
+
+    # --- Real-structure / broadening ---
+    k1: str = Field(default="0_0^0.01", description="Lorentzian size-broadening parameter, or 'fixed'.")
+    k2: str = Field(default="fixed", description="Mean-squared-strain (Gaussian) parameter, or 'fixed'.")
+    k3: str | None = Field(default=None, description="Additional strain-broadening parameter, or 'fixed'.")
+    b1: str = Field(default="0_0^0.005", description="Integral-breadth broadening parameter, or 'fixed'.")
+    b2: str | None = Field(default=None, description="Second broadening parameter (Gaussian component), or 'fixed'.")
+    sk: str | None = Field(default=None, description="Peak asymmetry / skew parameter, or 'fixed'.")
+
+    # --- Preferred orientation / scale ---
+    gewicht: GewichtType = Field(
+        default="0_0",
+        description="Preferred orientation model.",
+    )
+
+    # --- Le Bail ---
+    lebail: bool = Field(default=False, description="Use Le Bail method (intensity-free refinement).")
+
+    @field_validator("k1", "k2", "k3", "b1", "b2", "sk", mode="before")
+    @classmethod
+    def _check_refinement_param(cls, v, info):
+        if v is None:
+            return v
+        return _validate_refinement_param(str(v), info.field_name)
+
+    @classmethod
+    def coerce(cls, value: STRPhaseParameters | dict | None) -> STRPhaseParameters:
+        """Normalise *value* to a ``STRPhaseParameters`` instance."""
+        if value is None:
+            return cls()
+        if isinstance(value, dict):
+            return cls(**value)
+        return value
 
 
 class CIF2StrError(Exception):
@@ -232,15 +309,20 @@ def make_lattice_parameters_str(
     return lattice_parameters_str
 
 
-def make_peak_parameter_str(k1: str, k2: str, b1: str, gewicht: str, rp: int) -> str:
-    """Make the peak parameter string."""
-    return (
-        f"RP={rp} "
-        + (f"PARAM=k1={k1} " if k1 != "fixed" else "k1=0 ")
-        + (f"PARAM=k2={k2} " if k2 != "fixed" else "k2=0 ")
-        + (f"PARAM=B1={b1} " if b1 != "fixed" else "B1=0 ")
-        + (f"GEWICHT={gewicht} //" if gewicht != "0_0" else "PARAM=GEWICHT=0_0 //")
-    )
+def make_peak_parameter_str(params: STRPhaseParameters) -> str:
+    """Make the peak parameter string from STRPhaseParameters."""
+    parts = [f"RP={params.rp} "]
+    parts.append(f"PARAM=k1={params.k1} " if params.k1 != "fixed" else "k1=0 ")
+    parts.append(f"PARAM=k2={params.k2} " if params.k2 != "fixed" else "k2=0 ")
+    if params.k3 is not None:
+        parts.append(f"PARAM=k3={params.k3} " if params.k3 != "fixed" else "k3=0 ")
+    parts.append(f"PARAM=B1={params.b1} " if params.b1 != "fixed" else "B1=0 ")
+    if params.b2 is not None:
+        parts.append(f"PARAM=B2={params.b2} " if params.b2 != "fixed" else "B2=0 ")
+    if params.sk is not None:
+        parts.append(f"PARAM=sk={params.sk} " if params.sk != "fixed" else "sk=0 ")
+    parts.append(f"GEWICHT={params.gewicht} //" if params.gewicht != "0_0" else "PARAM=GEWICHT=0_0 //")
+    return "".join(parts)
 
 
 def cif2str(
@@ -248,13 +330,8 @@ def cif2str(
     phase_name_suffix: str = "",
     working_dir: Path | None = None,
     *,
-    lattice_range: float = 0.1,
-    gewicht: str = "0_0",
-    rp: int = 4,
-    k1: str = "0_0^0.01",
-    k2: str = "0_0^0.01",
-    b1: str = "0_0^0.01",
-    lebail: bool = False,
+    phase_params: STRPhaseParameters | None = None,
+    **kwargs,
 ) -> Path:
     """
     Convert CIF to Str format.
@@ -263,14 +340,8 @@ def cif2str(
         cif_path: the path to the CIF file
         phase_name_suffix: the suffix of the phase name
         working_dir: the folder to hold the processed str file
-        lattice_range: the range of the lattice parameters to be refined
-        gewicht: the weight fraction of the phase to be refined. Options: 0_0, SPHAR0, and SPHAR2. If 0_0, then no
-            preferred orientation. Read more in the BGMN manual.
-        rp: the peak function to be used in the refinement. Read more in the BGMN manual.
-        k1: the first peak parameter to be refined. Read more in the BGMN manual.
-        k2: the second peak parameter to be refined. Read more in the BGMN manual.
-        b1: the third peak parameter to be refined. Read more in the BGMN manual.
-        lebail: whether to use the Le Bail method
+        phase_params: STRPhaseParameters instance. If not provided, one is built from **kwargs.
+        **kwargs: forwarded to STRPhaseParameters if phase_params is not given.
 
     An example of the output .str file:
 
@@ -286,6 +357,9 @@ def cif2str(
     E=O-2 Wyckoff=d x=0.500000 y=0.000000 z=0.000000 TDS=0.010000
 
     """
+    if phase_params is None:
+        phase_params = STRPhaseParameters(**kwargs)
+
     str_path = cif_path.parent / f"{cif_path.stem}.str" if working_dir is None else working_dir / f"{cif_path.stem}.str"
 
     structure, spg = load_symmetrized_structure(cif_path)
@@ -326,13 +400,15 @@ def cif2str(
     str_text += make_spacegroup_setting_str(spacegroup_setting) + "\n"
 
     # add lattice
-    str_text += make_lattice_parameters_str(spacegroup_setting, structure, lattice_range=lattice_range) + "\n"
+    str_text += (
+        make_lattice_parameters_str(spacegroup_setting, structure, lattice_range=phase_params.lattice_range) + "\n"
+    )
 
-    # add RP
-    str_text += make_peak_parameter_str(k1, k2, b1, gewicht, rp) + "\n"
+    # add peak / real-structure parameters
+    str_text += make_peak_parameter_str(phase_params) + "\n"
 
     # add lebail
-    if lebail:
+    if phase_params.lebail:
         str_text += "LeBail=1\n"
 
     # add goals
