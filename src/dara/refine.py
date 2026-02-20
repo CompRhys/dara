@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from dara.bgmn_worker import BGMNWorker
 from dara.cif2str import STRPhaseParameters, cif2str
-from dara.generate_control_file import RefinementParametersParameters, generate_control_file
+from dara.generate_control_file import RefinementParameters, generate_control_file
 from dara.result import RefinementResult, get_result
 from dara.xrd import rasx2xy, raw2xy, xrdml2xy
 
@@ -99,11 +99,11 @@ def do_refinement(
     instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
     working_dir: Path | str | None = None,
     phase_params: STRPhaseParameters | dict | None = None,
-    refinement_params: RefinementParametersParameters | dict | None = None,
+    refinement_params: RefinementParameters | dict | None = None,
     show_progress: bool = False,
 ) -> RefinementResult:
     """Refine the structure using BGMN."""
-    refinement_params = RefinementParametersParameters.coerce(refinement_params)
+    refinement_params = RefinementParameters.coerce(refinement_params)
 
     pattern_path = Path(pattern_path)
     working_dir = (
@@ -154,7 +154,7 @@ def do_refinement_no_saving(
     phases: list[RefinementPhase | Path | str],
     instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
     phase_params: STRPhaseParameters | dict | None = None,
-    refinement_params: RefinementParametersParameters | dict | None = None,
+    refinement_params: RefinementParameters | dict | None = None,
     show_progress: bool = False,
 ) -> RefinementResult:
     """Refine the structure using BGMN in a temporary directory without saving."""

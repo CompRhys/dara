@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from dara.cif2str import STRPhaseParameters
-from dara.generate_control_file import RefinementParametersParameters
+from dara.generate_control_file import RefinementParameters
 from dara.refine import do_refinement
 
 TEST_DATA = Path(__file__).parent / "test_data"
@@ -90,9 +90,9 @@ def test_default_refinement(test_data):
 
 @pytest.mark.parametrize("case_name, params", list(_REFINEMENT_PARAM_CASES.items()))
 def test_refinement_params_accepted_by_bgmn(test_data, case_name, params, tmp_path):
-    """BGMN should accept the .sav file produced by each RefinementParametersParameters combo."""
+    """BGMN should accept the .sav file produced by each RefinementParameters combo."""
     pattern_path, cif_paths = test_data
-    refinement_params = RefinementParametersParameters(**params)
+    refinement_params = RefinementParameters(**params)
 
     result = do_refinement(
         pattern_path,
@@ -117,6 +117,6 @@ def test_phase_params_accepted_by_bgmn(test_data, case_name, params, tmp_path):
         instrument_profile="Aeris-fds-Pixcel1d-Medipix3",
         working_dir=tmp_path / case_name,
         phase_params=phase_params,
-        refinement_params=RefinementParametersParameters(itmax=1),
+        refinement_params=RefinementParameters(itmax=1),
     )
     assert result.lst_data.rwp > 0, f"RWP should be positive for case '{case_name}'"

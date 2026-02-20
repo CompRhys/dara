@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from dara.cif2str import STRPhaseParameters
-from dara.generate_control_file import RefinementParametersParameters
+from dara.generate_control_file import RefinementParameters
 from dara.refine import RefinementPhase
 
 # ---------------------------------------------------------------------------
@@ -72,15 +72,15 @@ class TestSTRPhaseParameters:
 
 
 # ---------------------------------------------------------------------------
-# RefinementParametersParameters
+# RefinementParameters
 # ---------------------------------------------------------------------------
 
 
-class TestRefinementParametersParameters:
-    """Tests for RefinementParametersParameters defaults, coerce, and SAV output."""
+class TestRefinementParameters:
+    """Tests for RefinementParameters defaults, coerce, and SAV output."""
 
     def test_defaults(self):
-        p = RefinementParametersParameters()
+        p = RefinementParameters()
         assert p.n_threads == 8
         assert p.wavelength == "Cu"
         assert p.eps1 == 0.0
@@ -90,26 +90,26 @@ class TestRefinementParametersParameters:
         assert p.wmax is None
 
     def test_coerce_none(self):
-        result = RefinementParametersParameters.coerce(None)
-        assert isinstance(result, RefinementParametersParameters)
-        assert result == RefinementParametersParameters()
+        result = RefinementParameters.coerce(None)
+        assert isinstance(result, RefinementParameters)
+        assert result == RefinementParameters()
 
     def test_coerce_dict(self):
-        result = RefinementParametersParameters.coerce({"wavelength": "Co", "n_threads": 4})
-        assert isinstance(result, RefinementParametersParameters)
+        result = RefinementParameters.coerce({"wavelength": "Co", "n_threads": 4})
+        assert isinstance(result, RefinementParameters)
         assert result.wavelength == "Co"
         assert result.n_threads == 4
 
     def test_coerce_passthrough(self):
-        original = RefinementParametersParameters(wavelength="Mo")
-        result = RefinementParametersParameters.coerce(original)
+        original = RefinementParameters(wavelength="Mo")
+        result = RefinementParameters.coerce(original)
         assert result is original
 
     # -- to_sav_lines tests --
 
     def test_sav_lines_defaults(self):
         """Default parameters should produce valid SAV lines."""
-        lines = RefinementParametersParameters().to_sav_lines()
+        lines = RefinementParameters().to_sav_lines()
         assert "LAMBDA=CU" in lines
         assert "EPS1=0.0" in lines
         assert any(l.startswith("PARAM[") and "EPS2=" in l for l in lines)
@@ -117,19 +117,19 @@ class TestRefinementParametersParameters:
         assert "PROTOKOLL=Y" in lines
 
     def test_sav_lines_synchrotron(self):
-        p = RefinementParametersParameters(wavelength=0.1234)
+        p = RefinementParameters(wavelength=0.1234)
         lines = p.to_sav_lines()
         assert "SYNCHROTRON=0.1234" in lines
         assert not any("LAMBDA" in l for l in lines)
 
     def test_sav_lines_wavelength_variants(self):
         for wl in ("Cu", "Co", "Cr", "Fe", "Mo"):
-            lines = RefinementParametersParameters(wavelength=wl).to_sav_lines()
+            lines = RefinementParameters(wavelength=wl).to_sav_lines()
             assert f"LAMBDA={wl.upper()}" in lines
 
     def test_sav_lines_optional_fields(self):
         """Optional fields should only appear when set."""
-        p_default = RefinementParametersParameters()
+        p_default = RefinementParameters()
         lines_default = p_default.to_sav_lines()
 
         # These should NOT appear with defaults
@@ -140,7 +140,7 @@ class TestRefinementParametersParameters:
         assert not any("SAVE=" in l for l in lines_default)
 
         # These SHOULD appear when set
-        p = RefinementParametersParameters(wmin=5.0, wmax=80.0, itmax=200, cut=0.5, save="Y")
+        p = RefinementParameters(wmin=5.0, wmax=80.0, itmax=200, cut=0.5, save="Y")
         lines = p.to_sav_lines()
         assert "WMIN=5.0" in lines
         assert "WMAX=80.0" in lines
@@ -150,7 +150,7 @@ class TestRefinementParametersParameters:
 
     def test_sav_lines_eps_refinable(self):
         """EPS parameters given as strings should get PARAM[] wrappers."""
-        p = RefinementParametersParameters(eps1="0_-0.01^0.01", eps2="0_-0.05^0.05")
+        p = RefinementParameters(eps1="0_-0.01^0.01", eps2="0_-0.05^0.05")
         lines = p.to_sav_lines()
         eps1_line = [l for l in lines if "EPS1=" in l][0]
         eps2_line = [l for l in lines if "EPS2=" in l][0]
@@ -159,7 +159,7 @@ class TestRefinementParametersParameters:
 
     def test_sav_lines_eps_fixed(self):
         """EPS parameters given as floats should NOT get PARAM[] wrappers."""
-        p = RefinementParametersParameters(eps1=0.0, eps2=0.0)
+        p = RefinementParameters(eps1=0.0, eps2=0.0)
         lines = p.to_sav_lines()
         eps1_line = [l for l in lines if "EPS1=" in l][0]
         eps2_line = [l for l in lines if "EPS2=" in l][0]
@@ -167,14 +167,14 @@ class TestRefinementParametersParameters:
         assert not eps2_line.startswith("PARAM[")
 
     def test_sav_lines_limits(self):
-        p = RefinementParametersParameters(limit2=0.5, limit4=0.3)
+        p = RefinementParameters(limit2=0.5, limit4=0.3)
         lines = p.to_sav_lines()
         assert "LIMIT2=0.5" in lines
         assert "LIMIT4=0.3" in lines
 
     def test_sav_lines_onlyiso(self):
-        lines_on = RefinementParametersParameters(onlyiso=True).to_sav_lines()
-        lines_off = RefinementParametersParameters(onlyiso=False).to_sav_lines()
+        lines_on = RefinementParameters(onlyiso=True).to_sav_lines()
+        lines_off = RefinementParameters(onlyiso=False).to_sav_lines()
         assert "ONLYISO=Y" in lines_on
         assert "ONLYISO=N" in lines_off
 

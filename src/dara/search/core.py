@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Literal
 import ray
 
 from dara.cif2str import STRPhaseParameters
-from dara.generate_control_file import RefinementParametersParameters
+from dara.generate_control_file import RefinementParameters
 from dara.search.tree import BaseSearchTree, SearchTree
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ def search_phases(
     express_mode: bool = True,
     enable_angular_cut: bool = True,
     phase_params: STRPhaseParameters | dict | None = None,
-    refinement_params: RefinementParametersParameters | dict | None = None,
+    refinement_params: RefinementParameters | dict | None = None,
     return_search_tree: bool = False,
     record_peak_matcher_scores: bool = False,
     rpb_threshold: float = 2,
@@ -66,7 +66,7 @@ def search_phases(
         enable_angular_cut: whether to enable angular cut, which will run the search on a reduced pattern range
             (wmin, wmax) to speed up the search process.
         phase_params: the parameters for the phase search
-        refinement_params: SAV-level control parameters (RefinementParametersParameters).
+        refinement_params: SAV-level control parameters (RefinementParameters).
         return_search_tree: whether to return the search tree. This is mainly used for debugging purposes.
         record_peak_matcher_scores: whether to record the peak matcher scores. This is mainly used for
             debugging purposes.
@@ -83,7 +83,7 @@ def search_phases(
         else:
             refinement_params = refinement_params.model_copy(update={"wavelength": wavelength})
 
-    refinement_params = RefinementParametersParameters.coerce(refinement_params)
+    refinement_params = RefinementParameters.coerce(refinement_params)
 
     if not ray.is_initialized():
         ray.init(runtime_env={"working_dir": None})

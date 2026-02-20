@@ -16,7 +16,7 @@ from treelib import Node, Tree
 
 from dara import do_refinement_no_saving
 from dara.cif2str import CIF2StrError, STRPhaseParameters
-from dara.generate_control_file import RefinementParametersParameters
+from dara.generate_control_file import RefinementParameters
 from dara.peak_detection import detect_peaks
 from dara.refine import RefinementPhase
 from dara.search.data_model import SearchNodeData, SearchResult
@@ -45,7 +45,7 @@ def remote_do_refinement_no_saving(
     cif_paths: list[Path],
     instrument_profile: str | Path,
     phase_params: STRPhaseParameters | dict | None,
-    refinement_params: RefinementParametersParameters | dict | None,
+    refinement_params: RefinementParameters | dict | None,
 ) -> RefinementResult | None:
     """
     Perform the actual refinement in the remote process.
@@ -116,7 +116,7 @@ def batch_refinement(
     cif_paths: list[list[RefinementPhase]],
     instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
     phase_params: STRPhaseParameters | dict | None = None,
-    refinement_params: RefinementParametersParameters | dict | None = None,
+    refinement_params: RefinementParameters | dict | None = None,
 ) -> list[RefinementResult]:
     handles = [
         remote_do_refinement_no_saving.remote(
@@ -348,7 +348,7 @@ class BaseSearchTree(Tree):
         maximum_grouping_distance: float,
         max_phases: float,
         rpb_threshold: float,
-        refinement_params: RefinementParametersParameters | dict | None = None,
+        refinement_params: RefinementParameters | dict | None = None,
         pinned_phases: list[RefinementPhase] | None = None,
         record_peak_matcher_scores: bool = False,
         *args,
@@ -358,7 +358,7 @@ class BaseSearchTree(Tree):
 
         self.pattern_path = pattern_path
         self.rpb_threshold = rpb_threshold
-        self.refinement_params = RefinementParametersParameters.coerce(refinement_params)
+        self.refinement_params = RefinementParameters.coerce(refinement_params)
         self.phase_params = STRPhaseParameters.coerce(phase_params)
         self.intensity_threshold = intensity_threshold
         self.instrument_profile = instrument_profile
@@ -834,7 +834,7 @@ class SearchTree(BaseSearchTree):
         pattern_path: the path to the pattern
         cif_paths: the paths to the CIF files
         pinned_phases: the phases that will be included in all the refinement
-        refinement_params: SAV-level control parameters (RefinementParametersParameters).
+        refinement_params: SAV-level control parameters (RefinementParameters).
         phase_params: the phase parameters, it will be passed to the refinement function.
         instrument_profile: the name/path of the instrument file, it will be passed to the refinement function.
         maximum_grouping_distance: the maximum grouping distance, default to 0.1
@@ -848,7 +848,7 @@ class SearchTree(BaseSearchTree):
         cif_paths: list[RefinementPhase | Path | str],
         pinned_phases: list[RefinementPhase | Path | str] | None = None,
         phase_params: STRPhaseParameters | dict | None = None,
-        refinement_params: RefinementParametersParameters | dict | None = None,
+        refinement_params: RefinementParameters | dict | None = None,
         instrument_profile: str | Path = "Aeris-fds-Pixcel1d-Medipix3",
         express_mode: bool = True,
         enable_angular_cut: bool = True,
@@ -870,12 +870,12 @@ class SearchTree(BaseSearchTree):
             if wavelength is not None:
                 legacy.setdefault("wavelength", wavelength)
             if refinement_params is None:
-                refinement_params = RefinementParametersParameters(**legacy)
+                refinement_params = RefinementParameters(**legacy)
             else:
                 _sp = (
                     refinement_params
-                    if isinstance(refinement_params, RefinementParametersParameters)
-                    else RefinementParametersParameters(**refinement_params)
+                    if isinstance(refinement_params, RefinementParameters)
+                    else RefinementParameters(**refinement_params)
                 )
                 refinement_params = _sp.model_copy(update={k: v for k, v in legacy.items() if v is not None})
 

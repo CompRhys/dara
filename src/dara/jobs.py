@@ -13,7 +13,7 @@ from pymatgen.core import Composition
 
 from dara.cif import Cif
 from dara.cif2str import STRPhaseParameters
-from dara.generate_control_file import RefinementParametersParameters
+from dara.generate_control_file import RefinementParameters
 from dara.prediction.core import PhasePredictor
 from dara.refine import RefinementPhase, do_refinement, do_refinement_no_saving
 from dara.schema import PhaseSearchDocument, RefinementDocument
@@ -44,7 +44,7 @@ class RefinementMaker(Maker):
 
     name: str = "refine"
     save: bool = True
-    refinement_params: RefinementParametersParameters | dict | None = None
+    refinement_params: RefinementParameters | dict | None = None
     show_progress: bool = True
 
     @job(output_schema=RefinementDocument)

@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from dara.utils import read_phase_name_from_str
 
 
-class RefinementParametersParameters(BaseModel):
+class RefinementParameters(BaseModel):
     """BGMN SAV control file parameters.
 
     See http://www.bgmn.de/variables.html and http://www.bgmn.de/calculat.html
@@ -70,8 +70,8 @@ class RefinementParametersParameters(BaseModel):
     save: str | None = Field(default=None, description="Save intermediate results (Y/N).")
 
     @classmethod
-    def coerce(cls, value: RefinementParametersParameters | dict | None) -> RefinementParametersParameters:
-        """Normalise *value* to a ``RefinementParametersParameters`` instance."""
+    def coerce(cls, value: RefinementParameters | dict | None) -> RefinementParameters:
+        """Normalise *value* to a ``RefinementParameters`` instance."""
         if value is None:
             return cls()
         if isinstance(value, dict):
@@ -220,7 +220,7 @@ def generate_control_file(
     instrument_profile: str | Path,
     working_dir: Path | None = None,
     *,
-    refinement_params: RefinementParametersParameters | None = None,
+    refinement_params: RefinementParameters | None = None,
     **kwargs,
 ) -> Path:
     """
@@ -231,12 +231,12 @@ def generate_control_file(
         str_paths: the paths to the STR files
         instrument_profile: the name of the instrument, if it is a path, it must be ended with `.geq`
         working_dir: the working directory
-        refinement_params: RefinementParametersParameters instance. If not provided, one is built from **kwargs.
-        **kwargs: forwarded to RefinementParametersParameters if refinement_params is not given.
+        refinement_params: RefinementParameters instance. If not provided, one is built from **kwargs.
+        **kwargs: forwarded to RefinementParameters if refinement_params is not given.
 
     """
     if refinement_params is None:
-        refinement_params = RefinementParametersParameters(**kwargs)
+        refinement_params = RefinementParameters(**kwargs)
 
     if working_dir is None:
         control_file_path = pattern_path.parent / f"{pattern_path.stem}.sav"
