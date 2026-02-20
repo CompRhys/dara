@@ -5,7 +5,7 @@ from __future__ import annotations
 import copy
 from collections import deque
 from traceback import print_exc
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, overload
 
 import ray
 
@@ -35,6 +35,43 @@ def remote_expand_node(search_tree: SearchTree, nid: str) -> ray.ObjectRef:
     """Expand a node in the search tree."""
     subtree = BaseSearchTree.from_search_tree(root_nid=nid, search_tree=search_tree)
     return _remote_expand_node.remote(subtree)
+
+
+@overload
+def search_phases(
+    pattern_path: Path | str,
+    phases: list[Path | str | RefinementPhase],
+    pinned_phases: list[Path | str | RefinementPhase] | None = ...,
+    max_phases: int = ...,
+    instrument_profile: str | Path = ...,
+    express_mode: bool = ...,
+    enable_angular_cut: bool = ...,
+    phase_params: STRPhaseParameters | dict | None = ...,
+    refinement_params: RefinementParameters | dict | None = ...,
+    return_search_tree: Literal[False] = ...,
+    record_peak_matcher_scores: bool = ...,
+    rpb_threshold: float = ...,
+    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float | None = ...,
+) -> list[SearchResult]: ...
+
+
+@overload
+def search_phases(
+    pattern_path: Path | str,
+    phases: list[Path | str | RefinementPhase],
+    pinned_phases: list[Path | str | RefinementPhase] | None = ...,
+    max_phases: int = ...,
+    instrument_profile: str | Path = ...,
+    express_mode: bool = ...,
+    enable_angular_cut: bool = ...,
+    phase_params: STRPhaseParameters | dict | None = ...,
+    refinement_params: RefinementParameters | dict | None = ...,
+    *,
+    return_search_tree: Literal[True],
+    record_peak_matcher_scores: bool = ...,
+    rpb_threshold: float = ...,
+    wavelength: Literal["Cu", "Co", "Cr", "Fe", "Mo"] | float | None = ...,
+) -> SearchTree: ...
 
 
 def search_phases(
