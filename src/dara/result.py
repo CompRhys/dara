@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from pymatgen.core import Composition, Lattice, Structure, get_el_sp
+from pymatgen.core.composition import Composition
+from pymatgen.core.lattice import Lattice
+from pymatgen.core.periodic_table import get_el_sp
+from pymatgen.core.structure import Structure
 from pymatgen.symmetry.groups import SpaceGroup
 
 from dara.plot import visualize
@@ -504,7 +507,7 @@ def parse_par(par_file: Path, phase_names: list[str]) -> pd.DataFrame:
 
             h = int(numbers[-3])
             k = int(numbers[-2])
-            l = int(numbers[-1])  # noqa: E741
+            l = int(numbers[-1])
 
             phase = re.search(r"PHASE=(\w+)", content[i]).group(1)
             phase, idx = phase_names_mapping[phase]
